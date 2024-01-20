@@ -4,6 +4,8 @@ import com.example.models.*;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import java.util.List;
+
+import io.reactivex.rxjava3.core.Observable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +14,7 @@ public class ProductController {
   private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
 
   @Get
-  public List<Product> getProducts() {
+  public Observable<Product> getProducts() {
     logger.info("getProducts() called");
 
     List<Ingredient> ingredients1 =
@@ -26,6 +28,6 @@ public class ProductController {
             new Ingredient(5L, "Ingredient5", false));
     Product product2 = new Product(2L, "Product2", false, ingredients2);
 
-    return List.of(product1, product2);
+    return Observable.just(product1, product2);
   }
 }

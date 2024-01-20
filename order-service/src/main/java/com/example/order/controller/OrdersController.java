@@ -5,6 +5,7 @@ import com.example.models.Order;
 import com.example.models.OrderItem;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
+import io.reactivex.rxjava3.core.Observable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +17,7 @@ public class OrdersController {
   private static final Logger logger = LoggerFactory.getLogger(OrdersController.class);
 
   @Get
-  public List<Order> getOrders() {
+  public Observable<Order> getOrders() {
     logger.info("getOrders() called");
 
     Order order1 =
@@ -33,6 +34,6 @@ public class OrdersController {
             .deliveryInfo(new DeliveryInfo("Street2", "City2"))
             .build();
 
-    return List.of(order1, order2);
+    return Observable.just(order1, order2);
   }
 }
