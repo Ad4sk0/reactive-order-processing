@@ -1,39 +1,44 @@
 package com.example.order.controller;
 
-import com.example.models.DeliveryInfo;
 import com.example.models.Order;
-import com.example.models.OrderItem;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Get;
-import io.reactivex.rxjava3.core.Observable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.List;
+import com.example.order.service.OrderService;
+import io.micronaut.core.async.annotation.SingleResult;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.annotation.*;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
 @Controller("/orders")
 public class OrdersController {
 
-  private static final Logger logger = LoggerFactory.getLogger(OrdersController.class);
+  private final OrderService orderService;
+
+  public OrdersController(OrderService orderService) {
+    this.orderService = orderService;
+  }
 
   @Get
-  public Observable<Order> getOrders() {
-    logger.info("getOrders() called");
+  Flowable<Order> list() {
+    return orderService.findAll();
+  }
 
-    Order order1 =
-        Order.builder()
-            .id(1L)
-            .items(List.of(new OrderItem(1L, "Product1", 1), new OrderItem(2L, "Product2", 3)))
-            .deliveryInfo(new DeliveryInfo("Street1", "City1"))
-            .build();
+  @Post
+  @Status(HttpStatus.CREATED)
+  @SingleResult
+  Single<Order> save(Order order) {
+    return orderService.save(order);
+  }
 
-    Order order2 =
-        Order.builder()
-            .id(2L)
-            .items(List.of(new OrderItem(2L, "Product2", 1), new OrderItem(3L, "Product3", 1)))
-            .deliveryInfo(new DeliveryInfo("Street2", "City2"))
-            .build();
+  @Put
+  @SingleResult
+  Single<Order> update(Order order) {
+    return orderService.save(order);
+  }
 
-    return Observable.just(order1, order2);
+  @Get("/{id}")
+  @SingleResult
+  Maybe<Order> find(@PathVariable String id) {
+    return orderService.findById(id);
   }
 }
