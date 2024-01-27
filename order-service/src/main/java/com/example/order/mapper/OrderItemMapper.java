@@ -11,7 +11,8 @@ public class OrderItemMapper {
     if (orderItem == null) {
       return null;
     }
-    return new OrderItemEmbeddable(orderItem.productId(), orderItem.productId(), orderItem.quantity());
+    return new OrderItemEmbeddable(
+        orderItem.productId(), orderItem.productName(), orderItem.quantity());
   }
 
   public static OrderItem toDTO(OrderItemEmbeddable orderItemEmbeddable) {
@@ -19,6 +20,8 @@ public class OrderItemMapper {
       return null;
     }
     return new OrderItem(
-        orderItemEmbeddable.productId(), orderItemEmbeddable.productName(), orderItemEmbeddable.quantity());
+        orderItemEmbeddable.productId(),
+        orderItemEmbeddable.productName(),
+        orderItemEmbeddable.quantity());
   }
 }
