@@ -26,6 +26,16 @@
             <groupId>io.micronaut.serde</groupId>
             <artifactId>micronaut-serde-jackson</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.micronaut.validation</groupId>
+            <artifactId>micronaut-validation</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -79,6 +89,11 @@
                                     <artifactId>micronaut-inject</artifactId>
                                 </exclusion>
                             </exclusions>
+                        </path>
+                        <path>
+                            <groupId>io.micronaut.validation</groupId>
+                            <artifactId>micronaut-validation-processor</artifactId>
+                            <version>${micronaut.validation.version}</version>
                         </path>
                     </annotationProcessorPaths>
                     <compilerArgs>

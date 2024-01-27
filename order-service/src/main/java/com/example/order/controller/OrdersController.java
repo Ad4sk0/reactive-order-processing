@@ -8,6 +8,7 @@ import io.micronaut.http.annotation.*;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.validation.Valid;
 
 @Controller("/orders")
 public class OrdersController {
@@ -26,13 +27,13 @@ public class OrdersController {
   @Post
   @Status(HttpStatus.CREATED)
   @SingleResult
-  Single<Order> save(Order order) {
+  Single<Order> save(@Valid Order order) {
     return orderService.save(order);
   }
 
   @Put
   @SingleResult
-  Single<Order> update(Order order) {
+  Single<Order> update(@Valid Order order) {
     return orderService.save(order);
   }
 
