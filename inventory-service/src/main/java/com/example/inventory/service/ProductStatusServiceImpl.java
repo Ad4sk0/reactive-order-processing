@@ -6,6 +6,8 @@ import com.example.models.ProductStatus;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import jakarta.inject.Singleton;
+import jakarta.validation.constraints.NotNull;
+import org.bson.types.ObjectId;
 
 @Singleton
 public class ProductStatusServiceImpl implements ProductStatusService {
@@ -23,8 +25,8 @@ public class ProductStatusServiceImpl implements ProductStatusService {
   }
 
   @Override
-  public Maybe<ProductStatus> findById(String id) {
-    return Maybe.fromPublisher(productStatusRepository.findById(id))
+  public Maybe<ProductStatus> findById(@NotNull String id) {
+    return Maybe.fromPublisher(productStatusRepository.findById(new ObjectId(id)))
         .map(ProductStatusMapper::toDTO);
   }
 }

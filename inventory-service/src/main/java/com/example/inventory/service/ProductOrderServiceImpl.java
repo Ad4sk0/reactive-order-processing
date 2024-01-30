@@ -7,6 +7,8 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.inject.Singleton;
+import jakarta.validation.constraints.NotNull;
+import org.bson.types.ObjectId;
 
 @Singleton
 public class ProductOrderServiceImpl implements ProductOrderService {
@@ -36,7 +38,8 @@ public class ProductOrderServiceImpl implements ProductOrderService {
   }
 
   @Override
-  public Maybe<ProductOrder> findById(String id) {
-    return Maybe.fromPublisher(productOrderRepository.findById(id)).map(ProductOrderMapper::toDTO);
+  public Maybe<ProductOrder> findById(@NotNull String id) {
+    return Maybe.fromPublisher(productOrderRepository.findById(new ObjectId(id)))
+        .map(ProductOrderMapper::toDTO);
   }
 }
