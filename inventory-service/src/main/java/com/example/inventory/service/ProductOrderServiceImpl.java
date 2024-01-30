@@ -2,11 +2,14 @@ package com.example.inventory.service;
 
 import com.example.inventory.mapper.ProductOrderMapper;
 import com.example.inventory.repository.ProductOrderRepository;
+import com.example.models.Product;
 import com.example.models.ProductOrder;
+import com.example.models.ProductStatus;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.inject.Singleton;
+import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotNull;
 import org.bson.types.ObjectId;
 
@@ -14,9 +17,16 @@ import org.bson.types.ObjectId;
 public class ProductOrderServiceImpl implements ProductOrderService {
 
   private final ProductOrderRepository productOrderRepository;
+  private final ProductService productService;
+  private final ProductStatusService productStatusService;
 
-  public ProductOrderServiceImpl(ProductOrderRepository productOrderRepository) {
+  public ProductOrderServiceImpl(
+      ProductOrderRepository productOrderRepository,
+      ProductService productService,
+      ProductStatusService productStatusService) {
     this.productOrderRepository = productOrderRepository;
+    this.productService = productService;
+    this.productStatusService = productStatusService;
   }
 
   @Override
@@ -26,6 +36,42 @@ public class ProductOrderServiceImpl implements ProductOrderService {
 
   @Override
   public Single<ProductOrder> save(ProductOrder productOrder) {
+
+    Single<Product> productSingle =
+        productService
+            .findById(productOrder.productId())
+            .switchIfEmpty(
+                Single.error(
+                    new ValidationException(
+                        String.format(
+                            "Product with id %s does not exist", productOrder.productId()))));
+
+    Single<ProductStatus> statusSingle =
+        productStatusService
+            .findById(productOrder.productId())
+            .switchIfEmpty(
+                Single.error(
+                    new ValidationException(
+                        String.format(
+                            "Product status with id %s does not exist",
+                            productOrder.productId()))));
+
+    return Single.zip(
+            productSingle,
+            statusSingle,
+            (product, productStatus) -> {
+              if (productStatus.quantity() < productOrder.quantity()) {
+                throw new ValidationException(
+                    String.format(
+                        "Product with id %s does not have enough quantity",
+                        productOrder.productId()));
+              }
+              return productStatus;
+            })
+        .flatMap(ignored -> persist(productOrder));
+  }
+
+  private Single<ProductOrder> persist(ProductOrder productOrder) {
     if (productOrder.id() == null) {
       return Single.fromPublisher(
               productOrderRepository.save(ProductOrderMapper.toEntity(productOrder)))
