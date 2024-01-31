@@ -1,8 +1,8 @@
 package com.example.models;
 
 import io.micronaut.serde.annotation.Serdeable;
-import java.util.List;
+import jakarta.validation.constraints.NotBlank;
 
 @Serdeable
 public record Product(
-    String id, String name, ProductType productType) {}
+        String id, @NotBlank String name, ProductType productType) {}
