@@ -5,6 +5,7 @@ import com.example.inventory.repository.ProductOrderRepository;
 import com.example.models.Product;
 import com.example.models.ProductOrder;
 import com.example.models.ProductStatus;
+import io.micronaut.transaction.annotation.Transactional;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -68,7 +69,28 @@ public class ProductOrderServiceImpl implements ProductOrderService {
               }
               return productStatus;
             })
-        .flatMap(ignored -> persist(productOrder));
+        .flatMap(productStatus -> processProductOrder(productStatus, productOrder));
+  }
+
+  @Override
+  public Maybe<ProductOrder> findById(@NotNull String id) {
+    return Maybe.fromPublisher(productOrderRepository.findById(new ObjectId(id)))
+        .map(ProductOrderMapper::toDTO);
+  }
+
+  @Transactional
+  Single<ProductOrder> processProductOrder(ProductStatus productStatus, ProductOrder productOrder) {
+    Single<ProductStatus> productStatusSingle = updateProductStatus(productStatus, productOrder);
+    Single<ProductOrder> productOrderSingle = persist(productOrder);
+
+    return Single.zip(productStatusSingle, productOrderSingle, (status, order) -> order);
+  }
+
+  private Single<ProductStatus> updateProductStatus(
+      ProductStatus productStatus, ProductOrder productOrder) {
+    ProductStatus updatedProductStatus =
+        new ProductStatus(productStatus.id(), productStatus.quantity() - productOrder.quantity());
+    return productStatusService.save(updatedProductStatus);
   }
 
   private Single<ProductOrder> persist(ProductOrder productOrder) {
@@ -81,11 +103,5 @@ public class ProductOrderServiceImpl implements ProductOrderService {
               productOrderRepository.update(ProductOrderMapper.toEntity(productOrder)))
           .map(ProductOrderMapper::toDTO);
     }
-  }
-
-  @Override
-  public Maybe<ProductOrder> findById(@NotNull String id) {
-    return Maybe.fromPublisher(productOrderRepository.findById(new ObjectId(id)))
-        .map(ProductOrderMapper::toDTO);
   }
 }
