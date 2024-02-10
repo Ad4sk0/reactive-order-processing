@@ -1,28 +1,21 @@
 package com.example.inventory.controller;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasSize;
 
 import com.example.inventory.AbstractContainersTest;
-import com.example.models.ProductStatus;
-import io.micronaut.core.type.Argument;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.client.HttpClient;
-import io.micronaut.http.client.annotation.Client;
-import jakarta.inject.Inject;
-import java.util.List;
+import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.Test;
 
 class ProductStatusControllerTestIT extends AbstractContainersTest {
-
-  @Inject
-  @Client("/")
-  HttpClient client;
-
   @Test
-  void shouldRetrieveProductStatuses() {
-    HttpRequest<String> httpGetRequest = HttpRequest.GET("/product-statuses");
-    List<ProductStatus> productStatuses =
-        client.toBlocking().retrieve(httpGetRequest, Argument.listOf(ProductStatus.class));
-    assertEquals(1, productStatuses.size());
+  void shouldRetrieveProductStatuses(RequestSpecification spec) {
+    spec.when()
+        .get("/product-statuses")
+        .then()
+        .statusCode(200)
+        .body(
+            "$", hasSize(1),
+            "id", hasItems("65c77c64c0df697183d064b5"));
   }
 }
