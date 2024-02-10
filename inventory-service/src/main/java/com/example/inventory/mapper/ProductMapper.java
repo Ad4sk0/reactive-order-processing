@@ -24,6 +24,6 @@ public class ProductMapper {
       return null;
     }
     return new Product(
-        productEntity.id().toString(), productEntity.name(), productEntity.productType());
+        productEntity._id().toString(), productEntity.name(), productEntity.productType());
   }
 }

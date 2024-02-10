@@ -10,4 +10,4 @@ import org.bson.types.ObjectId;
 
 @MappedEntity
 public record ProductEntity(
-    @Id @GeneratedValue ObjectId id, @NotBlank String name, @NotNull ProductType productType) {}
+        @Id @GeneratedValue ObjectId _id, @NotBlank String name, @NotNull ProductType productType) {}

@@ -24,7 +24,7 @@ public class ProductOrderMapper {
       return null;
     }
     return new ProductOrder(
-        productOrderEntity.id().toString(),
+        productOrderEntity._id().toString(),
         productOrderEntity.productId(),
         productOrderEntity.quantity());
   }

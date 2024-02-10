@@ -22,6 +22,6 @@ public class ProductStatusMapper {
     if (productStatusEntity == null) {
       return null;
     }
-    return new ProductStatus(productStatusEntity.id().toString(), productStatusEntity.quantity());
+    return new ProductStatus(productStatusEntity._id().toString(), productStatusEntity.quantity());
   }
 }
