@@ -27,13 +27,13 @@ public class OrdersController {
   @Post
   @Status(HttpStatus.CREATED)
   @SingleResult
-  Single<Order> save(@Valid Order order) {
+  Single<Order> save(@Valid @Body Order order) {
     return orderService.save(order);
   }
 
   @Put
   @SingleResult
-  Single<Order> update(@Valid Order order) {
+  Single<Order> update(@Valid @Body Order order) {
     return orderService.save(order);
   }
 

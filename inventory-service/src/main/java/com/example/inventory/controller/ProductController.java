@@ -27,13 +27,13 @@ public class ProductController {
   @Post
   @Status(HttpStatus.CREATED)
   @SingleResult
-  Single<Product> save(@Valid Product product) {
+  Single<Product> save(@Valid @Body Product product) {
     return productService.save(product);
   }
 
   @Put
   @SingleResult
-  Single<Product> update(@Valid Product product) {
+  Single<Product> update(@Valid @Body Product product) {
     if (product.id() == null) {
       return Single.error(new ValidationException("Product id is required"));
     }

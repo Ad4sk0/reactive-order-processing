@@ -26,7 +26,7 @@ public class ProductOrderController {
   @Post
   @Status(HttpStatus.CREATED)
   @SingleResult
-  Single<ProductOrder> save(@Valid ProductOrder productOrder) {
+  Single<ProductOrder> save(@Valid @Body ProductOrder productOrder) {
     return productOrderService.save(productOrder);
   }
 
