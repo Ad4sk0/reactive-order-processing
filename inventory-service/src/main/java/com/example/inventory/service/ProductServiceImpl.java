@@ -8,6 +8,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.inject.Singleton;
+import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotNull;
 import org.bson.types.ObjectId;
 
@@ -28,16 +29,31 @@ public class ProductServiceImpl implements ProductService {
   @Override
   public Single<Product> save(Product product) {
     if (product.id() == null) {
-      Product productToSave = product;
-      if (product.status() == null) {
-        productToSave = product.withStatus(new ProductStatus(0));
-      }
-      return Single.fromPublisher(productRepository.save(ProductMapper.toEntity(productToSave)))
-          .map(ProductMapper::toDTO);
+      return createProduct(product);
     } else {
-      return Single.fromPublisher(productRepository.update(ProductMapper.toEntity(product)))
-          .map(ProductMapper::toDTO);
+      return updateProduct(product);
     }
+  }
+
+  private Single<Product> createProduct(Product product) {
+    Product productToSave = product;
+    if (product.status() == null) {
+      productToSave = product.withStatus(new ProductStatus(0));
+    }
+    return Single.fromPublisher(productRepository.save(ProductMapper.toEntity(productToSave)))
+        .map(ProductMapper::toDTO);
+  }
+
+  private Single<Product> updateProduct(Product product) {
+    return findById(product.id())
+        .switchIfEmpty(
+            Single.error(
+                new ValidationException(
+                    String.format("Product with id %s does not exist", product.id()))))
+        .flatMap(
+            exisitingProduct ->
+                Single.fromPublisher(productRepository.update(ProductMapper.toEntity(product))))
+        .map(ProductMapper::toDTO);
   }
 
   @Override

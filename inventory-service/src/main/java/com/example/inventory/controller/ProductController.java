@@ -9,6 +9,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.validation.Valid;
+import jakarta.validation.ValidationException;
 
 @Controller("/products")
 public class ProductController {
@@ -33,6 +34,9 @@ public class ProductController {
   @Put
   @SingleResult
   Single<Product> update(@Valid Product product) {
+    if (product.id() == null) {
+      return Single.error(new ValidationException("Product id is required"));
+    }
     return productService.save(product);
   }
 
