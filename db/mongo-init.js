@@ -1,7 +1,7 @@
 const orderDbName = "orders";
 const inventoryDbName = "inventory";
-db.getSiblingDB(orderDbName);
-db.getSiblingDB(inventoryDbName);
+const orderDb = db.getSiblingDB(orderDbName);
+const inventoryDb = db.getSiblingDB(inventoryDbName);
 
 const admin_db = db.getSiblingDB("admin");
 admin_db.createUser({
@@ -14,5 +14,8 @@ admin_db.createUser({
   pwd: process.env["INVENTORY_USER_PASSWORD"],
   roles: [{ role: "readWrite", db: inventoryDbName }],
 });
+
+inventoryDb.createCollection("product_entity");
+inventoryDb.product_entity.createIndex( { name: 1 }, { unique: true } )
 
 

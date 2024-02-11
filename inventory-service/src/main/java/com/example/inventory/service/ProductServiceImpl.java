@@ -36,11 +36,26 @@ public class ProductServiceImpl implements ProductService {
   }
 
   private Single<Product> createProduct(Product product) {
-    Product productToSave = product;
+    Product productToSave;
     if (product.status() == null) {
       productToSave = product.withStatus(new ProductStatus(0));
+    } else {
+      productToSave = product;
     }
-    return Single.fromPublisher(productRepository.save(ProductMapper.toEntity(productToSave)))
+
+    return Maybe.fromPublisher(productRepository.findByName(product.name()))
+        .isEmpty()
+        .flatMap(
+            isEmpty -> {
+              if (isEmpty) {
+                return Single.fromPublisher(
+                    productRepository.save(ProductMapper.toEntity(productToSave)));
+              } else {
+                return Single.error(
+                    new ValidationException(
+                        "Product with name " + product.name() + " already exists"));
+              }
+            })
         .map(ProductMapper::toDTO);
   }
 
