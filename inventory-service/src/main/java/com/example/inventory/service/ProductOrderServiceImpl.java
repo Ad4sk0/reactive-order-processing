@@ -19,15 +19,11 @@ public class ProductOrderServiceImpl implements ProductOrderService {
 
   private final ProductOrderRepository productOrderRepository;
   private final ProductService productService;
-  private final ProductStatusService productStatusService;
 
   public ProductOrderServiceImpl(
-      ProductOrderRepository productOrderRepository,
-      ProductService productService,
-      ProductStatusService productStatusService) {
+      ProductOrderRepository productOrderRepository, ProductService productService) {
     this.productOrderRepository = productOrderRepository;
     this.productService = productService;
-    this.productStatusService = productStatusService;
   }
 
   @Override
@@ -47,29 +43,15 @@ public class ProductOrderServiceImpl implements ProductOrderService {
                         String.format(
                             "Product with id %s does not exist", productOrder.productId()))));
 
-    Single<ProductStatus> statusSingle =
-        productStatusService
-            .findById(productOrder.productId())
-            .switchIfEmpty(
-                Single.error(
-                    new ValidationException(
-                        String.format(
-                            "Product status with id %s does not exist",
-                            productOrder.productId()))));
-
-    return Single.zip(
-            productSingle,
-            statusSingle,
-            (product, productStatus) -> {
-              if (productStatus.quantity() < productOrder.quantity()) {
-                throw new ValidationException(
-                    String.format(
-                        "Product with id %s does not have enough quantity",
-                        productOrder.productId()));
-              }
-              return productStatus;
-            })
-        .flatMap(productStatus -> processProductOrder(productStatus, productOrder));
+    return productSingle.flatMap(
+        product -> {
+          if (product.status().quantity() < productOrder.quantity()) {
+            throw new ValidationException(
+                String.format(
+                    "Product with id %s does not have enough quantity", productOrder.productId()));
+          }
+          return processProductOrder(product, productOrder);
+        });
   }
 
   @Override
@@ -79,18 +61,17 @@ public class ProductOrderServiceImpl implements ProductOrderService {
   }
 
   @Transactional
-  Single<ProductOrder> processProductOrder(ProductStatus productStatus, ProductOrder productOrder) {
-    Single<ProductStatus> productStatusSingle = updateProductStatus(productStatus, productOrder);
+  Single<ProductOrder> processProductOrder(Product product, ProductOrder productOrder) {
+    Single<Product> productSingle = updateProductStatus(product, productOrder);
     Single<ProductOrder> productOrderSingle = persist(productOrder);
 
-    return Single.zip(productStatusSingle, productOrderSingle, (status, order) -> order);
+    return Single.zip(productSingle, productOrderSingle, (status, order) -> order);
   }
 
-  private Single<ProductStatus> updateProductStatus(
-      ProductStatus productStatus, ProductOrder productOrder) {
+  private Single<Product> updateProductStatus(Product product, ProductOrder productOrder) {
     ProductStatus updatedProductStatus =
-        new ProductStatus(productStatus.id(), productStatus.quantity() - productOrder.quantity());
-    return productStatusService.save(updatedProductStatus);
+        new ProductStatus(product.status().quantity() - productOrder.quantity());
+    return productService.save(product.withStatus(updatedProductStatus));
   }
 
   private Single<ProductOrder> persist(ProductOrder productOrder) {

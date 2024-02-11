@@ -3,6 +3,7 @@ package com.example.inventory.service;
 import com.example.inventory.mapper.ProductMapper;
 import com.example.inventory.repository.ProductRepository;
 import com.example.models.Product;
+import com.example.models.ProductStatus;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -27,7 +28,11 @@ public class ProductServiceImpl implements ProductService {
   @Override
   public Single<Product> save(Product product) {
     if (product.id() == null) {
-      return Single.fromPublisher(productRepository.save(ProductMapper.toEntity(product)))
+      Product productToSave = product;
+      if (product.status() == null) {
+        productToSave = product.withStatus(new ProductStatus(0));
+      }
+      return Single.fromPublisher(productRepository.save(ProductMapper.toEntity(productToSave)))
           .map(ProductMapper::toDTO);
     } else {
       return Single.fromPublisher(productRepository.update(ProductMapper.toEntity(product)))

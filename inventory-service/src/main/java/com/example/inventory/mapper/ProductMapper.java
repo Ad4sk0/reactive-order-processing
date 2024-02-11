@@ -16,7 +16,8 @@ public class ProductMapper {
     return new ProductEntity(
         Optional.ofNullable(product.id()).map(ObjectId::new).orElse(null),
         product.name(),
-        product.productType());
+        product.productType(),
+        ProductStatusMapper.toEntity(product.status()));
   }
 
   public static Product toDTO(ProductEntity productEntity) {
@@ -24,6 +25,9 @@ public class ProductMapper {
       return null;
     }
     return new Product(
-        productEntity._id().toString(), productEntity.name(), productEntity.productType());
+        productEntity._id().toString(),
+        productEntity.name(),
+        productEntity.productType(),
+        ProductStatusMapper.toDTO(productEntity.status()));
   }
 }
