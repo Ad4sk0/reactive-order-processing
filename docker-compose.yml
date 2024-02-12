@@ -13,6 +13,8 @@ services:
       ORDERS_USER_PASSWORD: $ORDERS_USER_PASSWORD
       INVENTORY_USER_USERNAME: $INVENTORY_USER_USERNAME
       INVENTORY_USER_PASSWORD: $INVENTORY_USER_PASSWORD
+      DELIVERY_USER_USERNAME: $DELIVERY_USER_USERNAME
+      DELIVERY_USER_PASSWORD: $DELIVERY_USER_PASSWORD
     volumes:
       - ./db/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
       - mongo-volume:/data/db
