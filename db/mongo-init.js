@@ -42,7 +42,7 @@ deliveryDb.vehicle_entity.insertMany([
 ]);
 
 deliveryDb.createCollection("driver_entity");
-deliveryDb.vehicle_entity.insertMany([
+deliveryDb.driver_entity.insertMany([
     {
         "name": "Driver 1",
         "status": "FREE"
