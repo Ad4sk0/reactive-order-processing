@@ -2,8 +2,6 @@ package com.example.delivery.mapper;
 
 import com.example.delivery.entity.DeliveryEntity;
 import com.example.models.Delivery;
-import java.util.Optional;
-import org.bson.types.ObjectId;
 
 public class DeliveryMapper {
 
@@ -14,9 +12,7 @@ public class DeliveryMapper {
       return null;
     }
     return new DeliveryEntity(
-        Optional.ofNullable(delivery.id()).map(ObjectId::new).orElse(null),
-        delivery.orderId(),
-        DeliveryInfoMapper.toEntity(delivery.deliveryInfo()));
+        null, delivery.orderId(), DeliveryInfoMapper.toEntity(delivery.deliveryInfo()), null, null);
   }
 
   public static Delivery toDTO(DeliveryEntity deliveryEntity) {
@@ -27,6 +23,7 @@ public class DeliveryMapper {
         deliveryEntity._id().toString(),
         deliveryEntity.orderId(),
         DeliveryInfoMapper.toDTO(deliveryEntity.deliveryInfo()),
-        null);
+        deliveryEntity.estimatedDeliveryTime(),
+        deliveryEntity.status());
   }
 }
