@@ -12,7 +12,12 @@ public class DeliveryMapper {
       return null;
     }
     return new DeliveryEntity(
-        null, delivery.orderId(), DeliveryInfoMapper.toEntity(delivery.deliveryInfo()), null, null);
+        null,
+        delivery.orderId(),
+        DeliveryInfoMapper.toEntity(delivery.deliveryInfo()),
+        null,
+        null,
+        null);
   }
 
   public static Delivery toDTO(DeliveryEntity deliveryEntity) {

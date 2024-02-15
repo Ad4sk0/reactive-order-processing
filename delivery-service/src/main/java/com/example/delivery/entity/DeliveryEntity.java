@@ -15,5 +15,6 @@ public record DeliveryEntity(
     @Id @GeneratedValue ObjectId _id,
     @NotBlank String orderId,
     @NotNull @Valid DeliveryInfoEmbeddable deliveryInfo,
+    @NotNull @Valid DeliveryJobEmbeddable deliveryJobEmbeddable,
     @NotNull LocalDateTime estimatedDeliveryTime,
     @NotNull DeliveryStatus status) {}
