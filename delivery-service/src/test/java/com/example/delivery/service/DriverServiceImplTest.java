@@ -3,6 +3,7 @@ package com.example.delivery.service;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static tests.TestsUtils.createObjectId;
 
 import com.example.delivery.entity.DriverEntity;
 import com.example.delivery.entity.DriverStatus;
@@ -35,16 +36,5 @@ class DriverServiceImplTest {
     Flowable<DriverEntity> driverEntityFlowable = Flowable.just(driverEntity);
     when(driverRepository.findFreeDrivers()).thenReturn(driverEntityFlowable);
     return driverRepository;
-  }
-
-  private String createObjectId(String id) {
-    if (id.length() > 24) {
-      throw new IllegalArgumentException("Id length must be 24 characters or less.");
-    }
-    StringBuilder sb = new StringBuilder(id);
-    while (sb.length() < 24) {
-      sb.insert(0, "0");
-    }
-    return sb.toString();
   }
 }

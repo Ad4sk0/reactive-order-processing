@@ -3,6 +3,7 @@ package com.example.delivery.service;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static tests.TestsUtils.createObjectId;
 
 import com.example.delivery.entity.VehicleEntity;
 import com.example.delivery.entity.VehicleStatus;
@@ -35,16 +36,5 @@ class VehicleServiceImplTest {
     Flowable<VehicleEntity> vehicleEntityFlowable = Flowable.just(vehicleEntity);
     when(vehicleRepository.findFreeVehicles()).thenReturn(vehicleEntityFlowable);
     return vehicleRepository;
-  }
-
-  private String createObjectId(String id) {
-    if (id.length() > 24) {
-      throw new IllegalArgumentException("Id length must be 24 characters or less.");
-    }
-    StringBuilder sb = new StringBuilder(id);
-    while (sb.length() < 24) {
-      sb.insert(0, "0");
-    }
-    return sb.toString();
   }
 }
