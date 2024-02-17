@@ -1,13 +1,10 @@
 package com.example.delivery.entity;
 
 import io.micronaut.data.annotation.Embeddable;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
+import org.bson.types.ObjectId;
 
 @Embeddable
 public record DeliveryJobEmbeddable(
-    @NotNull @Valid VehicleEntity vehicle,
-    @NotNull @Valid DriverEntity driver,
-    @NotNull Instant start,
-    Instant end) {}
+    @NotNull ObjectId vehicleId, @NotNull ObjectId driverId, @NotNull Instant start, Instant end) {}

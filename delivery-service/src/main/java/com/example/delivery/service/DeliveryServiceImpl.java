@@ -89,7 +89,7 @@ public class DeliveryServiceImpl implements DeliveryService {
   private DeliveryEntity createDeliveryEntity(
       Delivery delivery, DriverEntity driver, VehicleEntity vehicle) {
     var requestDelivery = DeliveryMapper.toEntity(delivery);
-    var deliveryJob = new DeliveryJobEmbeddable(vehicle, driver, Instant.now(), null);
+    var deliveryJob = new DeliveryJobEmbeddable(vehicle._id(), driver._id(), Instant.now(), null);
 
     return new DeliveryEntity(
         requestDelivery._id(),
