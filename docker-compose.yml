@@ -3,28 +3,26 @@ version: "3.8"
 services:
   mongo:
     image: mongo
+    container_name: mongo
     restart: no
     ports:
       - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: $ADMIN_USERNAME
-      MONGO_INITDB_ROOT_PASSWORD: $ADMIN_PASSWORD
-      ORDERS_USER_USERNAME: $ORDERS_USER_USERNAME
-      ORDERS_USER_PASSWORD: $ORDERS_USER_PASSWORD
-      INVENTORY_USER_USERNAME: $INVENTORY_USER_USERNAME
-      INVENTORY_USER_PASSWORD: $INVENTORY_USER_PASSWORD
-      DELIVERY_USER_USERNAME: $DELIVERY_USER_USERNAME
-      DELIVERY_USER_PASSWORD: $DELIVERY_USER_PASSWORD
     volumes:
-      - ./db/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./db/start.sh:/usr/local/bin/start.sh:ro
+      - ./db/initialize_db.sh:/usr/local/bin/initialize_db.sh:ro
+      - ./db/replica-init.js:/after-run-scripts/replica-init.js:ro
+      - ./db/mongo-init.js:/after-run-scripts/mongo-init.js:ro
       - mongo-volume:/data/db
+    command: [ "--replSet", "mainReplicaSet" ]
+    entrypoint: [ "start.sh" ]
   mongo-express:
     image: mongo-express
+    container_name: mongo-express
     restart: no
     ports:
       - "8081:8081"
     environment:
-      ME_CONFIG_MONGODB_URL: $MONGODB_URL
+      ME_CONFIG_MONGODB_URL: mongodb://mongo:27017
 
 volumes:
   mongo-volume:
