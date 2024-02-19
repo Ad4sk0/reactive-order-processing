@@ -11,10 +11,11 @@ import com.example.delivery.repository.VehicleRepository;
 import com.example.models.DeliveryInfo;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import io.reactivex.rxjava3.core.Flowable;
 import jakarta.inject.Inject;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
 @MicronautTest(startApplication = false)
 class VehicleServiceImplTest {
@@ -27,14 +28,15 @@ class VehicleServiceImplTest {
   @Test
   void findAvailableVehicle() {
     DeliveryInfo deliveryInfo = new DeliveryInfo("TestStreet", "TestCity");
-    vehicleService.findAvailableVehicle(deliveryInfo).test().assertValue(vehicleEntity);
+    StepVerifier.create(vehicleService.findAvailableVehicle(deliveryInfo))
+        .expectNext(vehicleEntity)
+        .verifyComplete();
   }
 
   @MockBean(VehicleRepository.class)
   VehicleRepository vehicleRepository() {
     VehicleRepository vehicleRepository = mock(VehicleRepository.class);
-    Flowable<VehicleEntity> vehicleEntityFlowable = Flowable.just(vehicleEntity);
-    when(vehicleRepository.findFreeVehicles()).thenReturn(vehicleEntityFlowable);
+    when(vehicleRepository.findFreeVehicles()).thenReturn(Flux.just(vehicleEntity));
     return vehicleRepository;
   }
 }

@@ -1,14 +1,14 @@
 package com.example.delivery.service;
 
 import com.example.models.DeliveryInfo;
-import io.reactivex.rxjava3.core.Single;
 import jakarta.inject.Singleton;
+import reactor.core.publisher.Mono;
 
 @Singleton
 public class AddressInRangeServiceImpl implements AddressInRangeService {
   @Override
-  public Single<Boolean> isAddressInRange(DeliveryInfo deliveryInfo) {
-    return Single.fromCallable(() -> validateIfAddressInDeliveryRange(deliveryInfo));
+  public Mono<Boolean> isAddressInRange(DeliveryInfo deliveryInfo) {
+    return Mono.fromCallable(() -> validateIfAddressInDeliveryRange(deliveryInfo));
   }
 
   private boolean validateIfAddressInDeliveryRange(DeliveryInfo deliveryInfo) {

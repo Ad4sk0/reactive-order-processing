@@ -3,15 +3,15 @@ package com.example.delivery.repository;
 import com.example.delivery.entity.VehicleEntity;
 import io.micronaut.data.mongodb.annotation.MongoFindQuery;
 import io.micronaut.data.mongodb.annotation.MongoRepository;
-import io.micronaut.data.repository.reactive.ReactiveStreamsCrudRepository;
+import io.micronaut.data.repository.reactive.ReactorCrudRepository;
 import jakarta.validation.Valid;
 import org.bson.types.ObjectId;
-import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 
 @MongoRepository
 public interface VehicleRepository
-    extends ReactiveStreamsCrudRepository<@Valid VehicleEntity, @Valid ObjectId> {
+    extends ReactorCrudRepository<@Valid VehicleEntity, @Valid ObjectId> {
 
   @MongoFindQuery(filter = "{status: 'FREE'}")
-  Publisher<VehicleEntity> findFreeVehicles();
+  Flux<VehicleEntity> findFreeVehicles();
 }

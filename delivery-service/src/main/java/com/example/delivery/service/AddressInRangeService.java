@@ -1,8 +1,8 @@
 package com.example.delivery.service;
 
 import com.example.models.DeliveryInfo;
-import io.reactivex.rxjava3.core.Single;
+import reactor.core.publisher.Mono;
 
 public interface AddressInRangeService {
-  Single<Boolean> isAddressInRange(DeliveryInfo deliveryInfo);
+  Mono<Boolean> isAddressInRange(DeliveryInfo deliveryInfo);
 }

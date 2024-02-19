@@ -9,14 +9,13 @@ import com.example.delivery.repository.DeliveryRepository;
 import com.example.models.Delivery;
 import com.example.models.DeliveryInfo;
 import com.example.models.DeliveryStatus;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import jakarta.inject.Singleton;
 import jakarta.validation.ValidationException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import org.bson.types.ObjectId;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Singleton
 public class DeliveryServiceImpl implements DeliveryService {
@@ -38,52 +37,46 @@ public class DeliveryServiceImpl implements DeliveryService {
   }
 
   @Override
-  public Flowable<Delivery> findAll() {
-    return Flowable.fromPublisher(deliveryRepository.findAll()).map(DeliveryMapper::toDTO);
+  public Flux<Delivery> findAll() {
+    return deliveryRepository.findAll().map(DeliveryMapper::toDTO);
   }
 
   @Override
-  public Single<Delivery> save(Delivery delivery) {
+  public Mono<Delivery> save(Delivery delivery) {
     if (delivery.id() != null) {
-      return Single.error(new UnsupportedOperationException("Id should not be provided"));
+      return Mono.error(new UnsupportedOperationException("Id should not be provided"));
     }
     DeliveryInfo deliveryInfo = delivery.deliveryInfo();
 
-    Single<Boolean> isAddressInRangeSingle =
+    Mono<Boolean> isAddressInRangeMono =
         addressInRangeService
             .isAddressInRange(deliveryInfo)
             .flatMap(
                 addressInRange -> {
                   if (!addressInRange) {
-                    return Single.error(new ValidationException("Address is out of range"));
+                    return Mono.error(new ValidationException("Address is out of range"));
                   }
-                  return Single.just(true);
+                  return Mono.just(true);
                 });
 
-    Single<DriverEntity> isDriverAvailableSingle =
+    Mono<DriverEntity> isDriverAvailableMono =
         driverService
             .findAvailableDriver(deliveryInfo)
-            .switchIfEmpty(Maybe.error(new ValidationException("No driver available")))
-            .toSingle();
+            .switchIfEmpty(Mono.error(new ValidationException("No driver available")));
 
-    Single<VehicleEntity> isVehicleAvailableSingle =
+    Mono<VehicleEntity> isVehicleAvailableMono =
         vehicleService
             .findAvailableVehicle(deliveryInfo)
-            .switchIfEmpty(Maybe.error(new ValidationException("No vehicle available")))
-            .toSingle();
+            .switchIfEmpty(Mono.error(new ValidationException("No vehicle available")));
 
-    return Single.zip(
-            isAddressInRangeSingle,
-            isDriverAvailableSingle,
-            isVehicleAvailableSingle,
-            (ignored, driver, vehicle) -> createDeliveryEntity(delivery, driver, vehicle))
+    return Mono.zip(isAddressInRangeMono, isDriverAvailableMono, isVehicleAvailableMono)
+        .map(tuple3 -> createDeliveryEntity(delivery, tuple3.getT2(), tuple3.getT3()))
         .flatMap(this::processDeliveryCreation);
   }
 
   @Override
-  public Maybe<Delivery> findById(String id) {
-    return Maybe.fromPublisher(deliveryRepository.findById(new ObjectId(id)))
-        .map(DeliveryMapper::toDTO);
+  public Mono<Delivery> findById(String id) {
+    return deliveryRepository.findById(new ObjectId(id)).map(DeliveryMapper::toDTO);
   }
 
   private DeliveryEntity createDeliveryEntity(
@@ -100,7 +93,7 @@ public class DeliveryServiceImpl implements DeliveryService {
         DeliveryStatus.INITIALIZING);
   }
 
-  private Single<Delivery> processDeliveryCreation(DeliveryEntity deliveryEntity) {
-    return Single.fromPublisher(deliveryRepository.save(deliveryEntity)).map(DeliveryMapper::toDTO);
+  private Mono<Delivery> processDeliveryCreation(DeliveryEntity deliveryEntity) {
+    return deliveryRepository.save(deliveryEntity).map(DeliveryMapper::toDTO);
   }
 }

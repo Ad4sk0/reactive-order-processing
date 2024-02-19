@@ -11,10 +11,11 @@ import com.example.delivery.repository.DriverRepository;
 import com.example.models.DeliveryInfo;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import io.reactivex.rxjava3.core.Flowable;
 import jakarta.inject.Inject;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
 @MicronautTest(startApplication = false)
 class DriverServiceImplTest {
@@ -27,14 +28,15 @@ class DriverServiceImplTest {
   @Test
   void findAvailableDriver() {
     DeliveryInfo deliveryInfo = new DeliveryInfo("TestStreet", "TestCity");
-    driverService.findAvailableDriver(deliveryInfo).test().assertValue(driverEntity);
+    StepVerifier.create(driverService.findAvailableDriver(deliveryInfo))
+        .expectNext(driverEntity)
+        .verifyComplete();
   }
 
   @MockBean(DriverRepository.class)
   DriverRepository driverRepository() {
     DriverRepository driverRepository = mock(DriverRepository.class);
-    Flowable<DriverEntity> driverEntityFlowable = Flowable.just(driverEntity);
-    when(driverRepository.findFreeDrivers()).thenReturn(driverEntityFlowable);
+    when(driverRepository.findFreeDrivers()).thenReturn(Flux.just(driverEntity));
     return driverRepository;
   }
 }
