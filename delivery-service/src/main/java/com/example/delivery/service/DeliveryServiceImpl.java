@@ -1,15 +1,13 @@
 package com.example.delivery.service;
 
-import com.example.delivery.entity.DeliveryEntity;
-import com.example.delivery.entity.DeliveryJobEmbeddable;
-import com.example.delivery.entity.DriverEntity;
-import com.example.delivery.entity.VehicleEntity;
+import com.example.delivery.entity.*;
 import com.example.delivery.mapper.DeliveryMapper;
-import com.example.delivery.repository.DeliveryRepository;
+import com.example.delivery.repository.*;
 import com.example.models.Delivery;
 import com.example.models.DeliveryInfo;
 import com.example.models.DeliveryStatus;
 import jakarta.inject.Singleton;
+import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -42,6 +40,7 @@ public class DeliveryServiceImpl implements DeliveryService {
   }
 
   @Override
+  @Transactional
   public Mono<Delivery> save(Delivery delivery) {
     if (delivery.id() != null) {
       return Mono.error(new UnsupportedOperationException("Id should not be provided"));
@@ -59,17 +58,17 @@ public class DeliveryServiceImpl implements DeliveryService {
                   return Mono.just(true);
                 });
 
-    Mono<DriverEntity> isDriverAvailableMono =
+    Mono<DriverEntity> availableDriverMono =
         driverService
-            .findAvailableDriver(deliveryInfo)
+            .findFirstFreeDriverAndChangeStatus(DriverStatus.DURING_DELIVERY)
             .switchIfEmpty(Mono.error(new ValidationException("No driver available")));
 
-    Mono<VehicleEntity> isVehicleAvailableMono =
+    Mono<VehicleEntity> availableVehicleMono =
         vehicleService
-            .findAvailableVehicle(deliveryInfo)
+            .findFirstFreeVehicleAndChangeStatus(VehicleStatus.DURING_DELIVERY)
             .switchIfEmpty(Mono.error(new ValidationException("No vehicle available")));
 
-    return Mono.zip(isAddressInRangeMono, isDriverAvailableMono, isVehicleAvailableMono)
+    return Mono.zip(isAddressInRangeMono, availableDriverMono, availableVehicleMono)
         .map(tuple3 -> createDeliveryEntity(delivery, tuple3.getT2(), tuple3.getT3()))
         .flatMap(this::processDeliveryCreation);
   }

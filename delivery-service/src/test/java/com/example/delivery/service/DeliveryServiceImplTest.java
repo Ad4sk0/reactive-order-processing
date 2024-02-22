@@ -82,7 +82,7 @@ class DeliveryServiceImplTest {
   void shouldNotCreateDeliveryIfNoDriverAvailable() {
     Delivery delivery =
         new Delivery(null, createObjectId("1"), new DeliveryInfo("Street1", "City1"), null, null);
-    when(driverService.findAvailableDriver(any())).thenReturn(Mono.empty());
+    when(driverService.findFirstFreeDriverAndChangeStatus(any())).thenReturn(Mono.empty());
     StepVerifier.create(deliveryService.save(delivery))
         .expectError(ValidationException.class)
         .verify();
@@ -92,7 +92,7 @@ class DeliveryServiceImplTest {
   void shouldNotCreateDeliveryIfNoVehicleAvailable() {
     Delivery delivery =
         new Delivery(null, createObjectId("1"), new DeliveryInfo("Street1", "City1"), null, null);
-    when(vehicleService.findAvailableVehicle(any())).thenReturn(Mono.empty());
+    when(vehicleService.findFirstFreeVehicleAndChangeStatus(any())).thenReturn(Mono.empty());
     StepVerifier.create(deliveryService.save(delivery))
         .expectError(ValidationException.class)
         .verify();
@@ -108,14 +108,14 @@ class DeliveryServiceImplTest {
   @MockBean(DriverService.class)
   DriverService driverService() {
     DriverService driverService = mock(DriverService.class);
-    when(driverService.findAvailableDriver(any())).thenReturn(Mono.just(driverEntity));
+    when(driverService.findFirstFreeDriverAndChangeStatus(any())).thenReturn(Mono.just(driverEntity));
     return driverService;
   }
 
   @MockBean(VehicleService.class)
   VehicleService vehicleService() {
     VehicleService vehicleService = mock(VehicleService.class);
-    when(vehicleService.findAvailableVehicle(any())).thenReturn(Mono.just(vehicleEntity));
+    when(vehicleService.findFirstFreeVehicleAndChangeStatus(any())).thenReturn(Mono.just(vehicleEntity));
     return vehicleService;
   }
 
