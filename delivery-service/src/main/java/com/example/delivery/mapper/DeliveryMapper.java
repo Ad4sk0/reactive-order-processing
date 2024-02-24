@@ -2,6 +2,7 @@ package com.example.delivery.mapper;
 
 import com.example.delivery.entity.DeliveryEntity;
 import com.example.models.Delivery;
+import org.bson.types.ObjectId;
 
 public class DeliveryMapper {
 
@@ -13,10 +14,8 @@ public class DeliveryMapper {
     }
     return new DeliveryEntity(
         null,
-        delivery.orderId(),
+        new ObjectId(delivery.orderId()),
         DeliveryInfoMapper.toEntity(delivery.deliveryInfo()),
-        null,
-        null,
         null);
   }
 
@@ -26,9 +25,9 @@ public class DeliveryMapper {
     }
     return new Delivery(
         deliveryEntity._id().toString(),
-        deliveryEntity.orderId(),
+        deliveryEntity.orderId().toString(),
         DeliveryInfoMapper.toDTO(deliveryEntity.deliveryInfo()),
-        deliveryEntity.estimatedDeliveryTime(),
-        deliveryEntity.status());
+        deliveryEntity.deliveryJobStatusEmbeddable().estimatedDeliveryTime(),
+        deliveryEntity.deliveryJobStatusEmbeddable().status());
   }
 }

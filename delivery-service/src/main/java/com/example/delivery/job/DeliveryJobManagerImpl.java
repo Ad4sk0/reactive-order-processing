@@ -23,6 +23,6 @@ public final class DeliveryJobManagerImpl implements DeliveryJobManager {
 
   @Override
   public void updateDelivery(DeliveryJobStatus deliveryJobStatus) {
-    LOG.info("Updating delivery job for delivery id {}", deliveryJobStatus.id());
+    LOG.info("Updating delivery job for delivery id {}", deliveryJobStatus.deliveryId());
   }
 }

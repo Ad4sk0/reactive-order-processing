@@ -3,7 +3,7 @@ package com.example.models;
 import io.micronaut.serde.annotation.Serdeable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Serdeable
 public record Delivery(
@@ -11,5 +11,5 @@ public record Delivery(
     @NotBlank @Size(min = 24, max = 24, message = "OrderId must be exactly 24 characters long")
         String orderId,
     @NotNull @Valid DeliveryInfo deliveryInfo,
-    LocalDateTime estimatedDeliveryTime,
+    Instant estimatedDeliveryTime,
     DeliveryStatus status) {}

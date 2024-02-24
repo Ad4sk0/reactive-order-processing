@@ -11,7 +11,6 @@ import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,15 +91,20 @@ public class DeliveryServiceImpl implements DeliveryService {
   private DeliveryEntity createDeliveryEntity(
       Delivery delivery, DriverEntity driver, VehicleEntity vehicle) {
     var requestDelivery = DeliveryMapper.toEntity(delivery);
-    var deliveryJob = new DeliveryJobEmbeddable(vehicle._id(), driver._id(), Instant.now(), null);
+    var deliveryJob =
+        new DeliveryJobStatusEmbeddable(
+            vehicle._id(),
+            driver._id(),
+            DeliveryStatus.INITIALIZING,
+            Instant.now(),
+            null,
+            Instant.now().plusSeconds(3600));
 
     return new DeliveryEntity(
         requestDelivery._id(),
         requestDelivery.orderId(),
         requestDelivery.deliveryInfo(),
-        deliveryJob,
-        LocalDateTime.now().plusHours(1),
-        DeliveryStatus.INITIALIZING);
+        deliveryJob);
   }
 
   private Mono<Delivery> processDeliveryCreation(DeliveryEntity deliveryEntity) {

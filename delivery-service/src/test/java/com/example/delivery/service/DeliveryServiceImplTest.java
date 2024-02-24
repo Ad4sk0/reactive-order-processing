@@ -142,9 +142,7 @@ class DeliveryServiceImplTest {
                       new ObjectId(createObjectId("2")),
                       deliveryEntity.orderId(),
                       deliveryEntity.deliveryInfo(),
-                      deliveryEntity.deliveryJobEmbeddable(),
-                      deliveryEntity.estimatedDeliveryTime(),
-                      deliveryEntity.status()));
+                      deliveryEntity.deliveryJobStatusEmbeddable()));
             });
     return deliveryRepository;
   }

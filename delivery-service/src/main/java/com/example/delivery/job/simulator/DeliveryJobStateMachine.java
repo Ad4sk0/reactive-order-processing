@@ -2,7 +2,7 @@ package com.example.delivery.job.simulator;
 
 import com.example.delivery.job.DeliveryJobStatus;
 import jakarta.inject.Singleton;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -41,13 +41,16 @@ public class DeliveryJobStateMachine {
 
   private DeliveryJobStatus createCurrentDeliveryJobStatus(
       String deliveryId, DeliveryJobState state) {
-    LocalDateTime estimatedTime;
+    Instant estimatedTime;
+    Instant endTime;
     if (state.getNextState() != null) {
-      estimatedTime = LocalDateTime.now().plusSeconds(getEstimatedTimeUntilEnd(state));
+      estimatedTime = Instant.now().plusSeconds(getEstimatedTimeUntilEnd(state));
+      endTime = null;
     } else {
       estimatedTime = null;
+      endTime = Instant.now();
     }
-    return new DeliveryJobStatus(deliveryId, state.getDeliveryStatus(), estimatedTime);
+    return new DeliveryJobStatus(deliveryId, state.getDeliveryStatus(), estimatedTime, endTime);
   }
 
   private void executeCurrentStateAndPlanNext(String body, DeliveryJobState state, long delay) {
