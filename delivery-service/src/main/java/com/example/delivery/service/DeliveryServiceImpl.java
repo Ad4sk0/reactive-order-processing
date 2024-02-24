@@ -2,6 +2,7 @@ package com.example.delivery.service;
 
 import com.example.delivery.entity.*;
 import com.example.delivery.event.DeliveryCreatedEvent;
+import com.example.delivery.job.DeliveryJobStatus;
 import com.example.delivery.mapper.DeliveryMapper;
 import com.example.delivery.repository.*;
 import com.example.models.Delivery;
@@ -87,6 +88,20 @@ public class DeliveryServiceImpl implements DeliveryService {
   @Override
   public Mono<Delivery> findById(String id) {
     return deliveryRepository.findById(new ObjectId(id)).map(DeliveryMapper::toDTO);
+  }
+
+  @Override
+  public Mono<Integer> updateStatusAndEstimatedDeliveryTime(DeliveryJobStatus deliveryJob) {
+    return deliveryRepository.updateStatusAndEstimatedDeliveryTime(
+        new ObjectId(deliveryJob.deliveryId()),
+        deliveryJob.deliveryStatus(),
+        deliveryJob.estimatedDeliveryTime());
+  }
+
+  @Override
+  public Mono<Integer> completeDelivery(DeliveryJobStatus deliveryJobStatus) {
+    return deliveryRepository.updateEndTime(
+        new ObjectId(deliveryJobStatus.deliveryId()), deliveryJobStatus.endTime());
   }
 
   private DeliveryEntity createDeliveryEntity(

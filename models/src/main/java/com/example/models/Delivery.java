@@ -12,4 +12,6 @@ public record Delivery(
         String orderId,
     @NotNull @Valid DeliveryInfo deliveryInfo,
     Instant estimatedDeliveryTime,
-    DeliveryStatus status) {}
+    DeliveryStatus status,
+    Instant start,
+    Instant end) {}

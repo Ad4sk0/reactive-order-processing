@@ -28,6 +28,8 @@ public class DeliveryMapper {
         deliveryEntity.orderId().toString(),
         DeliveryInfoMapper.toDTO(deliveryEntity.deliveryInfo()),
         deliveryEntity.deliveryJobStatusEmbeddable().estimatedDeliveryTime(),
-        deliveryEntity.deliveryJobStatusEmbeddable().status());
+        deliveryEntity.deliveryJobStatusEmbeddable().status(),
+        deliveryEntity.deliveryJobStatusEmbeddable().start(),
+        deliveryEntity.deliveryJobStatusEmbeddable().end());
   }
 }

@@ -53,7 +53,14 @@ class DeliveryServiceImplTest {
   @Test
   void shouldCreateDeliveryWhenDeliveryIsPossible() {
     Delivery delivery =
-        new Delivery(null, createObjectId("1"), new DeliveryInfo("Street1", "City1"), null, null);
+        new Delivery(
+            null,
+            createObjectId("1"),
+            new DeliveryInfo("Street1", "City1"),
+            null,
+            null,
+            null,
+            null);
 
     StepVerifier.create(deliveryService.save(delivery))
         .assertNext(
@@ -75,6 +82,8 @@ class DeliveryServiceImplTest {
             createObjectId("1"),
             new DeliveryInfo("Street1", "City1"),
             null,
+            null,
+            null,
             null);
     StepVerifier.create(deliveryService.save(delivery))
         .expectError(UnsupportedOperationException.class)
@@ -84,7 +93,14 @@ class DeliveryServiceImplTest {
   @Test
   void shouldNotCreateDeliveryIfAddressIsNotInRange() {
     Delivery delivery =
-        new Delivery(null, createObjectId("1"), new DeliveryInfo("Street1", "City1"), null, null);
+        new Delivery(
+            null,
+            createObjectId("1"),
+            new DeliveryInfo("Street1", "City1"),
+            null,
+            null,
+            null,
+            null);
     when(addressInRangeService.isAddressInRange(any())).thenReturn(Mono.just(false));
     StepVerifier.create(deliveryService.save(delivery))
         .expectError(ValidationException.class)
@@ -94,7 +110,14 @@ class DeliveryServiceImplTest {
   @Test
   void shouldNotCreateDeliveryIfNoDriverAvailable() {
     Delivery delivery =
-        new Delivery(null, createObjectId("1"), new DeliveryInfo("Street1", "City1"), null, null);
+        new Delivery(
+            null,
+            createObjectId("1"),
+            new DeliveryInfo("Street1", "City1"),
+            null,
+            null,
+            null,
+            null);
     when(driverService.findFirstFreeDriverAndChangeStatus(any())).thenReturn(Mono.empty());
     StepVerifier.create(deliveryService.save(delivery))
         .expectError(ValidationException.class)
@@ -104,7 +127,14 @@ class DeliveryServiceImplTest {
   @Test
   void shouldNotCreateDeliveryIfNoVehicleAvailable() {
     Delivery delivery =
-        new Delivery(null, createObjectId("1"), new DeliveryInfo("Street1", "City1"), null, null);
+        new Delivery(
+            null,
+            createObjectId("1"),
+            new DeliveryInfo("Street1", "City1"),
+            null,
+            null,
+            null,
+            null);
     when(vehicleService.findFirstFreeVehicleAndChangeStatus(any())).thenReturn(Mono.empty());
     StepVerifier.create(deliveryService.save(delivery))
         .expectError(ValidationException.class)
