@@ -1,6 +1,7 @@
 package com.example.delivery.service;
 
 import com.example.delivery.entity.*;
+import com.example.delivery.job.DeliveryJobManager;
 import com.example.delivery.mapper.DeliveryMapper;
 import com.example.delivery.repository.*;
 import com.example.models.Delivery;
@@ -12,26 +13,31 @@ import jakarta.validation.ValidationException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Singleton
 public class DeliveryServiceImpl implements DeliveryService {
-
+  private static final Logger LOG = LoggerFactory.getLogger(DeliveryServiceImpl.class);
   private final DeliveryRepository deliveryRepository;
   private final AddressInRangeService addressInRangeService;
   private final DriverService driverService;
   private final VehicleService vehicleService;
+  private final DeliveryJobManager deliveryJobManager;
 
   public DeliveryServiceImpl(
       DeliveryRepository deliveryRepository,
       AddressInRangeService addressInRangeService,
       DriverService driverService,
-      VehicleService vehicleService) {
+      VehicleService vehicleService,
+      DeliveryJobManager deliveryJobManager) {
     this.deliveryRepository = deliveryRepository;
     this.addressInRangeService = addressInRangeService;
     this.driverService = driverService;
     this.vehicleService = vehicleService;
+    this.deliveryJobManager = deliveryJobManager;
   }
 
   @Override
@@ -70,7 +76,12 @@ public class DeliveryServiceImpl implements DeliveryService {
 
     return Mono.zip(isAddressInRangeMono, availableDriverMono, availableVehicleMono)
         .map(tuple3 -> createDeliveryEntity(delivery, tuple3.getT2(), tuple3.getT3()))
-        .flatMap(this::processDeliveryCreation);
+        .flatMap(this::processDeliveryCreation)
+        .doOnSuccess(
+            createdDelivery -> {
+              LOG.info("Delivery created: {}", createdDelivery);
+              deliveryJobManager.enqueueDeliveryJob(createdDelivery.id());
+            });
   }
 
   @Override
