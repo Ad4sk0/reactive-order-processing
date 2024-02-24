@@ -143,6 +143,15 @@
             <artifactId>context-propagation</artifactId>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>io.micronaut.jms</groupId>
+            <artifactId>micronaut-jms-activemq-artemis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>artemis-server</artifactId>
+            <version>2.32.0</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
