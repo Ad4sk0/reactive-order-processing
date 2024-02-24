@@ -13,9 +13,15 @@ import org.slf4j.LoggerFactory;
 class DeliveryCreateJobConsumer {
 
   private static final Logger LOG = LoggerFactory.getLogger(DeliveryCreateJobConsumer.class);
+  private final DeliveryJobStateMachine deliveryJobStateMachine;
+
+  public DeliveryCreateJobConsumer(DeliveryJobStateMachine deliveryJobStateMachine) {
+    this.deliveryJobStateMachine = deliveryJobStateMachine;
+  }
 
   @Queue(START_DELIVERY_JOB_QUEUE_NAME)
   public void receiveStartDeliveryMessage(@MessageBody String deliveryId) {
-    LOG.info("Simulator: Received message on {}: {}", START_DELIVERY_JOB_QUEUE_NAME, deliveryId);
+    LOG.debug("Simulator: Received message on {}: {}", START_DELIVERY_JOB_QUEUE_NAME, deliveryId);
+    deliveryJobStateMachine.initJobExecution(deliveryId);
   }
 }

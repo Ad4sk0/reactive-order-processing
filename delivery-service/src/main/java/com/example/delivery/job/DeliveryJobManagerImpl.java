@@ -1,9 +1,6 @@
 package com.example.delivery.job;
 
-import com.example.models.DeliveryStatus;
 import jakarta.inject.Singleton;
-import java.time.LocalDateTime;
-import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,12 +22,7 @@ public final class DeliveryJobManagerImpl implements DeliveryJobManager {
   }
 
   @Override
-  public void updateDeliveryStatus(String deliveryId, DeliveryStatus status) {
-    throw new NotImplementedException();
-  }
-
-  @Override
-  public void updateDeliveryEstimatedTime(String deliveryId, LocalDateTime estimatedTime) {
-    throw new NotImplementedException();
+  public void updateDelivery(DeliveryJobStatus deliveryJobStatus) {
+    LOG.info("Updating delivery job for delivery id {}", deliveryJobStatus.id());
   }
 }
