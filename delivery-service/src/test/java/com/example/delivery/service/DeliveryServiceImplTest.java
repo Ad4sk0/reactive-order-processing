@@ -7,11 +7,11 @@ import static org.mockito.Mockito.when;
 import static tests.TestsUtils.createObjectId;
 
 import com.example.delivery.entity.*;
-import com.example.delivery.job.DeliveryJobManager;
 import com.example.delivery.repository.DeliveryRepository;
 import com.example.models.Delivery;
 import com.example.models.DeliveryInfo;
 import com.example.models.DeliveryStatus;
+import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.validation.ValidationException;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +41,7 @@ class DeliveryServiceImplTest {
             addressInRangeService,
             driverService,
             vehicleService,
-            mock(DeliveryJobManager.class));
+            mock(ApplicationEventPublisher.class));
   }
 
   final DriverEntity driverEntity =

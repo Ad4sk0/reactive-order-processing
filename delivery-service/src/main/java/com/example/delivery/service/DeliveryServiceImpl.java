@@ -1,12 +1,13 @@
 package com.example.delivery.service;
 
 import com.example.delivery.entity.*;
-import com.example.delivery.job.DeliveryJobManager;
+import com.example.delivery.event.DeliveryCreatedEvent;
 import com.example.delivery.mapper.DeliveryMapper;
 import com.example.delivery.repository.*;
 import com.example.models.Delivery;
 import com.example.models.DeliveryInfo;
 import com.example.models.DeliveryStatus;
+import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
@@ -24,19 +25,19 @@ public class DeliveryServiceImpl implements DeliveryService {
   private final AddressInRangeService addressInRangeService;
   private final DriverService driverService;
   private final VehicleService vehicleService;
-  private final DeliveryJobManager deliveryJobManager;
+  private final ApplicationEventPublisher<DeliveryCreatedEvent> eventPublisher;
 
   public DeliveryServiceImpl(
       DeliveryRepository deliveryRepository,
       AddressInRangeService addressInRangeService,
       DriverService driverService,
       VehicleService vehicleService,
-      DeliveryJobManager deliveryJobManager) {
+      ApplicationEventPublisher<DeliveryCreatedEvent> eventPublisher) {
     this.deliveryRepository = deliveryRepository;
     this.addressInRangeService = addressInRangeService;
     this.driverService = driverService;
     this.vehicleService = vehicleService;
-    this.deliveryJobManager = deliveryJobManager;
+    this.eventPublisher = eventPublisher;
   }
 
   @Override
@@ -79,7 +80,7 @@ public class DeliveryServiceImpl implements DeliveryService {
         .doOnSuccess(
             createdDelivery -> {
               LOG.info("Delivery created: {}", createdDelivery);
-              deliveryJobManager.enqueueDeliveryJob(createdDelivery.id());
+              eventPublisher.publishEvent(new DeliveryCreatedEvent(createdDelivery.id()));
             });
   }
 
