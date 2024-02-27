@@ -6,6 +6,7 @@ import com.example.delivery.repository.DriverCustomRepository;
 import com.example.delivery.repository.DriverRepository;
 import com.example.models.DeliveryInfo;
 import jakarta.inject.Singleton;
+import org.bson.types.ObjectId;
 import reactor.core.publisher.Mono;
 
 @Singleton
@@ -28,6 +29,11 @@ public class DriverServiceImpl implements DriverService {
   @Override
   public Mono<DriverEntity> findFirstFreeDriverAndChangeStatus(DriverStatus status) {
     return driverCustomRepository.findFirstFreeDriverAndChangeStatus(status);
+  }
+
+  @Override
+  public Mono<Integer> updateDriverStatus(ObjectId objectId, DriverStatus status) {
+    return driverRepository.updateStatus(objectId, status);
   }
 
   private Mono<DriverEntity> findFirstFreeDriver() {

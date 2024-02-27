@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 @Singleton
 public class DeliveryServiceImpl implements DeliveryService {
@@ -100,8 +101,67 @@ public class DeliveryServiceImpl implements DeliveryService {
 
   @Override
   public Mono<Integer> completeDelivery(DeliveryJobStatus deliveryJobStatus) {
-    return deliveryRepository.updateEndTime(
-        new ObjectId(deliveryJobStatus.deliveryId()), deliveryJobStatus.endTime());
+
+    Mono<Void> updateDriverAndVehicleStatusMono =
+        getCompletedDelivery(deliveryJobStatus.deliveryId())
+            .flatMap(
+                deliveryEntity -> {
+                  ObjectId driverId = deliveryEntity.deliveryJobStatusEmbeddable().driverId();
+                  ObjectId vehicleId = deliveryEntity.deliveryJobStatusEmbeddable().vehicleId();
+                  return Mono.zip(
+                          updateDriverForCompletedDelivery(deliveryEntity, driverId),
+                          updateVehicleForCompletedDelivery(deliveryEntity, vehicleId))
+                      .then();
+                });
+
+    Mono<Integer> updateDeliveryEndTimeMono =
+        deliveryRepository.updateEndTime(
+            new ObjectId(deliveryJobStatus.deliveryId()), deliveryJobStatus.endTime());
+
+    return Mono.zip(updateDriverAndVehicleStatusMono, updateDeliveryEndTimeMono).map(Tuple2::getT2);
+  }
+
+  private Mono<Object> updateVehicleForCompletedDelivery(
+      DeliveryEntity deliveryEntity, ObjectId vehicleId) {
+    return vehicleService
+        .updateVehicleStatus(vehicleId, VehicleStatus.FREE)
+        .map(
+            updatedCount -> {
+              if (updatedCount == 0) {
+                return Mono.error(
+                    new IllegalStateException(
+                        String.format(
+                            "Vehicle %s for completed delivery %s can not be updated",
+                            vehicleId, deliveryEntity._id())));
+              }
+              return updatedCount;
+            });
+  }
+
+  private Mono<Object> updateDriverForCompletedDelivery(
+      DeliveryEntity deliveryEntity, ObjectId driverId) {
+    return driverService
+        .updateDriverStatus(driverId, DriverStatus.FREE)
+        .map(
+            updatedCount -> {
+              if (updatedCount == 0) {
+                return Mono.error(
+                    new IllegalStateException(
+                        String.format(
+                            "Driver %s for completed delivery %s can not be updated",
+                            driverId, deliveryEntity._id())));
+              }
+              return updatedCount;
+            });
+  }
+
+  private Mono<DeliveryEntity> getCompletedDelivery(String deliveryId) {
+    return deliveryRepository
+        .findById(new ObjectId(deliveryId))
+        .switchIfEmpty(
+            Mono.error(
+                new IllegalStateException(
+                    "Delivery not found for job status with id: " + deliveryId)));
   }
 
   private DeliveryEntity createDeliveryEntity(

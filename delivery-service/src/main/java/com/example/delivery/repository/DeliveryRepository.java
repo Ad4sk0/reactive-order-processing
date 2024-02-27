@@ -13,8 +13,7 @@ import org.bson.types.ObjectId;
 import reactor.core.publisher.Mono;
 
 @MongoRepository
-public interface DeliveryRepository
-    extends ReactorCrudRepository<@Valid DeliveryEntity, @Valid ObjectId> {
+public interface DeliveryRepository extends ReactorCrudRepository<@Valid DeliveryEntity, ObjectId> {
 
   @MongoUpdateQuery(
       filter = "{_id: :objectId}",

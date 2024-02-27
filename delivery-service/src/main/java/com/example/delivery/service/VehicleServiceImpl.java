@@ -6,6 +6,7 @@ import com.example.delivery.repository.VehicleCustomRepository;
 import com.example.delivery.repository.VehicleRepository;
 import com.example.models.DeliveryInfo;
 import jakarta.inject.Singleton;
+import org.bson.types.ObjectId;
 import reactor.core.publisher.Mono;
 
 @Singleton
@@ -28,6 +29,11 @@ public class VehicleServiceImpl implements VehicleService {
   @Override
   public Mono<VehicleEntity> findFirstFreeVehicleAndChangeStatus(VehicleStatus status) {
     return vehicleCustomRepository.findFirstFreeVehicleAndChangeStatus(status);
+  }
+
+  @Override
+  public Mono<Integer> updateVehicleStatus(ObjectId objectId, VehicleStatus status) {
+    return vehicleRepository.updateStatus(objectId, status);
   }
 
   private Mono<VehicleEntity> findFirstFreeVehicle() {
