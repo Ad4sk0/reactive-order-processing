@@ -10,7 +10,7 @@ public class OrderMapper {
 
   public static OrderEntity toEntity(Order order) {
     return OrderEntity.builder()
-        .id(order.getId())
+        .id(null)
         .orderItems(
             Optional.ofNullable(order.getItems())
                 .map(orderItems -> orderItems.stream().map(OrderItemMapper::toEntity).toList())
@@ -21,7 +21,7 @@ public class OrderMapper {
 
   public static Order toDTO(OrderEntity orderEntity) {
     return Order.builder()
-        .id(orderEntity.getId())
+        .id(orderEntity.getId().toString())
         .items(
             Optional.ofNullable(orderEntity.getOrderItems())
                 .map(orderItems -> orderItems.stream().map(OrderItemMapper::toDTO).toList())

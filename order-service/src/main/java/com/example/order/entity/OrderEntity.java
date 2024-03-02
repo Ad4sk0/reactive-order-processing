@@ -9,13 +9,14 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import lombok.Builder;
 import lombok.Data;
+import org.bson.types.ObjectId;
 
 @MappedEntity
 @Data
 @Builder
 public class OrderEntity {
 
-  @Id @GeneratedValue private String id;
+  @Id @GeneratedValue private ObjectId id;
 
   @Valid @NotEmpty private List<OrderItemEmbeddable> orderItems;
 
