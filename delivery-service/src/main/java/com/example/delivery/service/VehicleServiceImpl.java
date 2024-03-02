@@ -22,8 +22,8 @@ public class VehicleServiceImpl implements VehicleService {
   }
 
   @Override
-  public Mono<VehicleEntity> findAvailableVehicle(DeliveryInfo deliveryInfo) {
-    return findFirstFreeVehicle();
+  public Mono<Boolean> isVehicleAvailable(DeliveryInfo deliveryInfo) {
+    return vehicleRepository.findFreeVehicles().hasElements();
   }
 
   @Override
@@ -34,9 +34,5 @@ public class VehicleServiceImpl implements VehicleService {
   @Override
   public Mono<Integer> updateVehicleStatus(ObjectId objectId, VehicleStatus status) {
     return vehicleRepository.updateStatus(objectId, status);
-  }
-
-  private Mono<VehicleEntity> findFirstFreeVehicle() {
-    return vehicleRepository.findFreeVehicles().next();
   }
 }

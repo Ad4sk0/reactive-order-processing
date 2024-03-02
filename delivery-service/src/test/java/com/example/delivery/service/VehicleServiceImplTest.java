@@ -21,7 +21,8 @@ class VehicleServiceImplTest {
 
   @BeforeEach
   void init() {
-    vehicleService = new VehicleServiceImpl(createVehicleRepositoryMock(), mock(VehicleCustomRepository.class));
+    vehicleService =
+        new VehicleServiceImpl(createVehicleRepositoryMock(), mock(VehicleCustomRepository.class));
   }
 
   final VehicleEntity vehicleEntity =
@@ -30,8 +31,8 @@ class VehicleServiceImplTest {
   @Test
   void findAvailableVehicle() {
     DeliveryInfo deliveryInfo = new DeliveryInfo("TestStreet", "TestCity");
-    StepVerifier.create(vehicleService.findAvailableVehicle(deliveryInfo))
-        .expectNext(vehicleEntity)
+    StepVerifier.create(vehicleService.isVehicleAvailable(deliveryInfo))
+        .expectNext(true)
         .verifyComplete();
   }
 

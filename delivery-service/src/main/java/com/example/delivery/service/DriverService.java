@@ -7,7 +7,7 @@ import org.bson.types.ObjectId;
 import reactor.core.publisher.Mono;
 
 public interface DriverService {
-  Mono<DriverEntity> findAvailableDriver(DeliveryInfo deliveryInfo);
+  Mono<Boolean> isDriverAvailable(DeliveryInfo deliveryInfo);
 
   Mono<DriverEntity> findFirstFreeDriverAndChangeStatus(DriverStatus status);
 

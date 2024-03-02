@@ -7,7 +7,7 @@ import org.bson.types.ObjectId;
 import reactor.core.publisher.Mono;
 
 public interface VehicleService {
-  Mono<VehicleEntity> findAvailableVehicle(DeliveryInfo deliveryInfo);
+  Mono<Boolean> isVehicleAvailable(DeliveryInfo deliveryInfo);
 
   Mono<VehicleEntity> findFirstFreeVehicleAndChangeStatus(VehicleStatus status);
 

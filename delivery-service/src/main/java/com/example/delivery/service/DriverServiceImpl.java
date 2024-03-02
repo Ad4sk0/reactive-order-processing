@@ -22,8 +22,8 @@ public class DriverServiceImpl implements DriverService {
   }
 
   @Override
-  public Mono<DriverEntity> findAvailableDriver(DeliveryInfo deliveryInfo) {
-    return findFirstFreeDriver();
+  public Mono<Boolean> isDriverAvailable(DeliveryInfo deliveryInfo) {
+    return driverRepository.findFreeDrivers().hasElements();
   }
 
   @Override
@@ -34,9 +34,5 @@ public class DriverServiceImpl implements DriverService {
   @Override
   public Mono<Integer> updateDriverStatus(ObjectId objectId, DriverStatus status) {
     return driverRepository.updateStatus(objectId, status);
-  }
-
-  private Mono<DriverEntity> findFirstFreeDriver() {
-    return driverRepository.findFreeDrivers().next();
   }
 }

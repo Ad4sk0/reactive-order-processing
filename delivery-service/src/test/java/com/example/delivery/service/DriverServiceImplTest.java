@@ -1,6 +1,5 @@
 package com.example.delivery.service;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static tests.TestsUtils.createObjectId;
@@ -33,8 +32,8 @@ class DriverServiceImplTest {
   @Test
   void findAvailableDriver() {
     DeliveryInfo deliveryInfo = new DeliveryInfo("TestStreet", "TestCity");
-    StepVerifier.create(driverService.findAvailableDriver(deliveryInfo))
-        .expectNext(driverEntity)
+    StepVerifier.create(driverService.isDriverAvailable(deliveryInfo))
+        .expectNext(true)
         .verifyComplete();
   }
 

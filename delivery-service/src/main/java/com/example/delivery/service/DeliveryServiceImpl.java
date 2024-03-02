@@ -5,9 +5,7 @@ import com.example.delivery.event.DeliveryCreatedEvent;
 import com.example.delivery.job.DeliveryJobStatus;
 import com.example.delivery.mapper.DeliveryMapper;
 import com.example.delivery.repository.*;
-import com.example.models.Delivery;
-import com.example.models.DeliveryInfo;
-import com.example.models.DeliveryStatus;
+import com.example.models.*;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
@@ -71,7 +69,9 @@ public class DeliveryServiceImpl implements DeliveryService {
             .switchIfEmpty(Mono.error(new ValidationException("No vehicle available")));
 
     return Mono.zip(estimatedDeliveryTimeMono, availableDriverMono, availableVehicleMono)
-        .map(tuple3 -> createDeliveryEntity(delivery, tuple3.getT1(), tuple3.getT2(), tuple3.getT3()))
+        .map(
+            tuple3 ->
+                createDeliveryEntity(delivery, tuple3.getT1(), tuple3.getT2(), tuple3.getT3()))
         .flatMap(this::processDeliveryCreation)
         .doOnSuccess(
             createdDelivery -> {
@@ -113,6 +113,36 @@ public class DeliveryServiceImpl implements DeliveryService {
             new ObjectId(deliveryJobStatus.deliveryId()), deliveryJobStatus.endTime());
 
     return Mono.zip(updateDriverAndVehicleStatusMono, updateDeliveryEndTimeMono).map(Tuple2::getT2);
+  }
+
+  @Override
+  public Mono<DeliveryPossibility> isDeliveryPossible(DeliveryInfo deliveryInfo) {
+
+    Mono<Boolean> isAddressInRangeMono = deliveryLocationService.isAddressInRange(deliveryInfo);
+    Mono<Boolean> isDriverAvailableMono = driverService.isDriverAvailable(deliveryInfo);
+    Mono<Boolean> isVehicleAvailableMono = vehicleService.isVehicleAvailable(deliveryInfo);
+
+    return Mono.zip(isAddressInRangeMono, isDriverAvailableMono, isVehicleAvailableMono)
+        .flatMap(
+            tuple3 -> {
+              boolean isAddressInRange = tuple3.getT1();
+              boolean isDriverAvailable = tuple3.getT2();
+              boolean isVehicleAvailable = tuple3.getT3();
+
+              if (!isAddressInRange || !isDriverAvailable || !isVehicleAvailable) {
+                var deliveryPossibilityDetails =
+                    new DeliveryPossibilityDetails(
+                        isAddressInRange, isVehicleAvailable, isDriverAvailable);
+                return Mono.just(
+                    new DeliveryPossibility(false, deliveryInfo, null, deliveryPossibilityDetails));
+              }
+
+              Mono<Instant> estimatedDeliveryTimeMono =
+                  deliveryLocationService.getEstimatedDeliveryTime(deliveryInfo);
+              return estimatedDeliveryTimeMono.map(
+                  estimatedDeliveryTime ->
+                      new DeliveryPossibility(true, deliveryInfo, estimatedDeliveryTime, null));
+            });
   }
 
   private Mono<Object> updateVehicleForCompletedDelivery(
