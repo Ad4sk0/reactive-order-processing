@@ -1,5 +1,7 @@
 package com.example.delivery.job.simulator;
 
+import static com.example.delivery.job.simulator.DeliveryJobStateUtils.getEstimatedTimeUntilEnd;
+
 import com.example.delivery.job.DeliveryJobStatus;
 import jakarta.inject.Singleton;
 import java.time.Instant;
@@ -61,20 +63,7 @@ public class DeliveryJobStateMachine {
     deliveryJobStatusProducer.sendUpdateJobStatusMessage(deliveryJobStatus);
   }
 
-  private long getEstimatedTimeUntilEnd(DeliveryJobState state) {
-    long sum = 0;
-    while (state != null) {
-      sum += getAverageStateDelay(state);
-      state = state.getNextState();
-    }
-    return sum;
-  }
-
   private static long getRandomStateDelay(DeliveryJobState state) {
     return random.nextLong(state.getMinExecutionTime(), state.getMaxExecutionTime());
-  }
-
-  private static long getAverageStateDelay(DeliveryJobState state) {
-    return (state.getMaxExecutionTime() - state.getMinExecutionTime()) / 2L;
   }
 }

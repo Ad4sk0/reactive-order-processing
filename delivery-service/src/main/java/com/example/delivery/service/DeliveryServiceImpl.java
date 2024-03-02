@@ -24,19 +24,19 @@ import reactor.util.function.Tuple2;
 public class DeliveryServiceImpl implements DeliveryService {
   private static final Logger LOG = LoggerFactory.getLogger(DeliveryServiceImpl.class);
   private final DeliveryRepository deliveryRepository;
-  private final AddressInRangeService addressInRangeService;
+  private final DeliveryLocationService deliveryLocationService;
   private final DriverService driverService;
   private final VehicleService vehicleService;
   private final ApplicationEventPublisher<DeliveryCreatedEvent> eventPublisher;
 
   public DeliveryServiceImpl(
       DeliveryRepository deliveryRepository,
-      AddressInRangeService addressInRangeService,
+      DeliveryLocationService deliveryLocationService,
       DriverService driverService,
       VehicleService vehicleService,
       ApplicationEventPublisher<DeliveryCreatedEvent> eventPublisher) {
     this.deliveryRepository = deliveryRepository;
-    this.addressInRangeService = addressInRangeService;
+    this.deliveryLocationService = deliveryLocationService;
     this.driverService = driverService;
     this.vehicleService = vehicleService;
     this.eventPublisher = eventPublisher;
@@ -55,16 +55,10 @@ public class DeliveryServiceImpl implements DeliveryService {
     }
     DeliveryInfo deliveryInfo = delivery.deliveryInfo();
 
-    Mono<Boolean> isAddressInRangeMono =
-        addressInRangeService
-            .isAddressInRange(deliveryInfo)
-            .flatMap(
-                addressInRange -> {
-                  if (!addressInRange) {
-                    return Mono.error(new ValidationException("Address is out of range"));
-                  }
-                  return Mono.just(true);
-                });
+    Mono<Instant> estimatedDeliveryTimeMono =
+        deliveryLocationService
+            .getEstimatedDeliveryTime(deliveryInfo)
+            .onErrorMap(throwable -> new ValidationException(throwable.getMessage()));
 
     Mono<DriverEntity> availableDriverMono =
         driverService
@@ -76,8 +70,8 @@ public class DeliveryServiceImpl implements DeliveryService {
             .findFirstFreeVehicleAndChangeStatus(VehicleStatus.DURING_DELIVERY)
             .switchIfEmpty(Mono.error(new ValidationException("No vehicle available")));
 
-    return Mono.zip(isAddressInRangeMono, availableDriverMono, availableVehicleMono)
-        .map(tuple3 -> createDeliveryEntity(delivery, tuple3.getT2(), tuple3.getT3()))
+    return Mono.zip(estimatedDeliveryTimeMono, availableDriverMono, availableVehicleMono)
+        .map(tuple3 -> createDeliveryEntity(delivery, tuple3.getT1(), tuple3.getT2(), tuple3.getT3()))
         .flatMap(this::processDeliveryCreation)
         .doOnSuccess(
             createdDelivery -> {
@@ -165,7 +159,10 @@ public class DeliveryServiceImpl implements DeliveryService {
   }
 
   private DeliveryEntity createDeliveryEntity(
-      Delivery delivery, DriverEntity driver, VehicleEntity vehicle) {
+      Delivery delivery,
+      Instant estimatedDeliveryTime,
+      DriverEntity driver,
+      VehicleEntity vehicle) {
     var requestDelivery = DeliveryMapper.toEntity(delivery);
     var deliveryJob =
         new DeliveryJobStatusEmbeddable(
@@ -174,7 +171,7 @@ public class DeliveryServiceImpl implements DeliveryService {
             DeliveryStatus.INITIALIZING,
             Instant.now(),
             null,
-            Instant.now().plusSeconds(3600));
+            estimatedDeliveryTime);
 
     return new DeliveryEntity(
         requestDelivery._id(),

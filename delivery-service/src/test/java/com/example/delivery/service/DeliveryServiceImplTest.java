@@ -13,6 +13,7 @@ import com.example.models.DeliveryInfo;
 import com.example.models.DeliveryStatus;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.validation.ValidationException;
+import java.time.Instant;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,7 @@ class DeliveryServiceImplTest {
 
   DeliveryService deliveryService;
 
-  AddressInRangeService addressInRangeService;
+  DeliveryLocationService deliveryLocationService;
 
   DriverService driverService;
 
@@ -31,14 +32,14 @@ class DeliveryServiceImplTest {
 
   @BeforeEach
   void init() {
-    addressInRangeService = createAddressInRangeServiceMock();
+    deliveryLocationService = createDeliveryLocationServiceMock();
     driverService = createDriverServiceMock();
     vehicleService = createVehicleService();
 
     deliveryService =
         new DeliveryServiceImpl(
             createDeliveryRepositoryMock(),
-            addressInRangeService,
+            deliveryLocationService,
             driverService,
             vehicleService,
             mock(ApplicationEventPublisher.class));
@@ -101,7 +102,8 @@ class DeliveryServiceImplTest {
             null,
             null,
             null);
-    when(addressInRangeService.isAddressInRange(any())).thenReturn(Mono.just(false));
+    when(deliveryLocationService.getEstimatedDeliveryTime(any()))
+        .thenReturn(Mono.error(new ValidationException("Address is not in range")));
     StepVerifier.create(deliveryService.save(delivery))
         .expectError(ValidationException.class)
         .verify();
@@ -141,10 +143,11 @@ class DeliveryServiceImplTest {
         .verify();
   }
 
-  AddressInRangeService createAddressInRangeServiceMock() {
-    AddressInRangeService addressInRangeService = mock(AddressInRangeService.class);
-    when(addressInRangeService.isAddressInRange(any())).thenReturn(Mono.just(true));
-    return addressInRangeService;
+  DeliveryLocationService createDeliveryLocationServiceMock() {
+    DeliveryLocationService deliveryLocationService = mock(DeliveryLocationService.class);
+    when(deliveryLocationService.getEstimatedDeliveryTime(any()))
+        .thenReturn(Mono.just(Instant.now().plusSeconds(60)));
+    return deliveryLocationService;
   }
 
   DriverService createDriverServiceMock() {
