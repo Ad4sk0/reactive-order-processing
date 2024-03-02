@@ -1,17 +1,14 @@
 package com.example.inventory.repository;
 
 import com.example.inventory.entity.ProductEntity;
-import io.micronaut.data.mongodb.annotation.MongoFindQuery;
 import io.micronaut.data.mongodb.annotation.MongoRepository;
-import io.micronaut.data.repository.reactive.ReactiveStreamsCrudRepository;
+import io.micronaut.data.repository.reactive.ReactorCrudRepository;
 import jakarta.validation.Valid;
 import org.bson.types.ObjectId;
-import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
 
 @MongoRepository
-public interface ProductRepository
-    extends ReactiveStreamsCrudRepository<@Valid ProductEntity, ObjectId> {
+public interface ProductRepository extends ReactorCrudRepository<@Valid ProductEntity, ObjectId> {
 
-  @MongoFindQuery(filter = "{name:{$regex: :name}}")
-  Publisher<ProductEntity> findByName(String name);
+  Mono<ProductEntity> findByName(String name);
 }

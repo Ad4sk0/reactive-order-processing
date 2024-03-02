@@ -1,16 +1,16 @@
 package com.example.inventory.service;
 
+import com.example.inventory.entity.ProductEntity;
 import com.example.inventory.mapper.ProductMapper;
 import com.example.inventory.repository.ProductRepository;
 import com.example.models.Product;
 import com.example.models.ProductStatus;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import jakarta.inject.Singleton;
 import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotNull;
 import org.bson.types.ObjectId;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Singleton
 public class ProductServiceImpl implements ProductService {
@@ -22,12 +22,12 @@ public class ProductServiceImpl implements ProductService {
   }
 
   @Override
-  public Flowable<Product> findAll() {
-    return Flowable.fromPublisher(productRepository.findAll()).map(ProductMapper::toDTO);
+  public Flux<Product> findAll() {
+    return productRepository.findAll().map(ProductMapper::toDTO);
   }
 
   @Override
-  public Single<Product> save(Product product) {
+  public Mono<Product> save(Product product) {
     if (product.id() == null) {
       return createProduct(product);
     } else {
@@ -35,7 +35,7 @@ public class ProductServiceImpl implements ProductService {
     }
   }
 
-  private Single<Product> createProduct(Product product) {
+  private Mono<Product> createProduct(Product product) {
     Product productToSave;
     if (product.status() == null) {
       productToSave = product.withStatus(new ProductStatus(0));
@@ -43,37 +43,30 @@ public class ProductServiceImpl implements ProductService {
       productToSave = product;
     }
 
-    return Maybe.fromPublisher(productRepository.findByName(product.name()))
-        .isEmpty()
+    return productRepository
+        .findByName(product.name())
         .flatMap(
-            isEmpty -> {
-              if (isEmpty) {
-                return Single.fromPublisher(
-                    productRepository.save(ProductMapper.toEntity(productToSave)));
-              } else {
-                return Single.error(
+            existingProduct ->
+                Mono.error(
                     new ValidationException(
-                        "Product with name " + product.name() + " already exists"));
-              }
-            })
+                        "Product with name " + product.name() + " already exists")))
+        .switchIfEmpty(productRepository.save(ProductMapper.toEntity(productToSave)))
+        .cast(ProductEntity.class)
         .map(ProductMapper::toDTO);
   }
 
-  private Single<Product> updateProduct(Product product) {
+  private Mono<Product> updateProduct(Product product) {
     return findById(product.id())
         .switchIfEmpty(
-            Single.error(
+            Mono.error(
                 new ValidationException(
                     String.format("Product with id %s does not exist", product.id()))))
-        .flatMap(
-            exisitingProduct ->
-                Single.fromPublisher(productRepository.update(ProductMapper.toEntity(product))))
+        .flatMap(exisitingProduct -> productRepository.update(ProductMapper.toEntity(product)))
         .map(ProductMapper::toDTO);
   }
 
   @Override
-  public Maybe<Product> findById(@NotNull String id) {
-    return Maybe.fromPublisher(productRepository.findById(new ObjectId(id)))
-        .map(ProductMapper::toDTO);
+  public Mono<Product> findById(@NotNull String id) {
+    return productRepository.findById(new ObjectId(id)).map(ProductMapper::toDTO);
   }
 }

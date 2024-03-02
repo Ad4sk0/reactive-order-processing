@@ -5,11 +5,10 @@ import com.example.models.*;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.*;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Controller("/products")
 public class ProductController {
@@ -20,29 +19,29 @@ public class ProductController {
   }
 
   @Get
-  Flowable<Product> list() {
+  Flux<Product> list() {
     return productService.findAll();
   }
 
   @Post
   @Status(HttpStatus.CREATED)
   @SingleResult
-  Single<Product> save(@Valid @Body Product product) {
+  Mono<Product> save(@Valid @Body Product product) {
     return productService.save(product);
   }
 
   @Put
   @SingleResult
-  Single<Product> update(@Valid @Body Product product) {
+  Mono<Product> update(@Valid @Body Product product) {
     if (product.id() == null) {
-      return Single.error(new ValidationException("Product id is required"));
+      return Mono.error(new ValidationException("Product id is required"));
     }
     return productService.save(product);
   }
 
   @Get("/{id}")
   @SingleResult
-  Maybe<Product> find(@PathVariable String id) {
+  Mono<Product> find(@PathVariable String id) {
     return productService.findById(id);
   }
 }
