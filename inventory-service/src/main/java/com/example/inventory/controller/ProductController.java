@@ -2,11 +2,13 @@ package com.example.inventory.controller;
 
 import com.example.inventory.service.ProductService;
 import com.example.models.*;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.*;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
+import java.util.List;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -19,7 +21,10 @@ public class ProductController {
   }
 
   @Get
-  Flux<Product> list() {
+  Flux<Product> list(@Nullable @QueryValue List<String> ids) {
+    if (ids != null && !ids.isEmpty()) {
+      return productService.findByIds(ids);
+    }
     return productService.findAll();
   }
 
