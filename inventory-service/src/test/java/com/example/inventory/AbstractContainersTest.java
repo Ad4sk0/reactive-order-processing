@@ -15,9 +15,10 @@ public abstract class AbstractContainersTest implements TestPropertyProvider {
   static final GenericContainer<?> mongoDBContainer =
       new GenericContainer<>("mongo:latest")
           .withExposedPorts(27017)
+              .withCommand("--replSet", "mainReplicaSet")
           .withCopyFileToContainer(
-              MountableFile.forClasspathResource("mongo-init.js"),
-              "/docker-entrypoint-initdb.d/mongo-init.js");
+              MountableFile.forClasspathResource("replica-init.js"),
+              "/docker-entrypoint-initdb.d/replica-init.js");
 
   static {
     mongoDBContainer.start();
