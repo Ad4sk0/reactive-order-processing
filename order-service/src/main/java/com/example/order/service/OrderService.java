@@ -1,15 +1,14 @@
 package com.example.order.service;
 
 import com.example.models.Order;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public interface OrderService {
 
-  Flowable<Order> findAll();
+  Flux<Order> findAll();
 
-  Single<Order> save(Order order);
+  Mono<Order> save(Order order);
 
-  Maybe<Order> findById(String id);
+  Mono<Order> findById(String id);
 }

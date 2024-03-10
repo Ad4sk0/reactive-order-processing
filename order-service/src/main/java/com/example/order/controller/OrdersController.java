@@ -5,10 +5,9 @@ import com.example.order.service.OrderService;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.*;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import jakarta.validation.Valid;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Controller("/orders")
 public class OrdersController {
@@ -20,26 +19,26 @@ public class OrdersController {
   }
 
   @Get
-  Flowable<Order> list() {
+  Flux<Order> list() {
     return orderService.findAll();
   }
 
   @Post
   @Status(HttpStatus.CREATED)
   @SingleResult
-  Single<Order> save(@Valid @Body Order order) {
+  Mono<Order> save(@Valid @Body Order order) {
     return orderService.save(order);
   }
 
   @Put
   @SingleResult
-  Single<Order> update(@Valid @Body Order order) {
+  Mono<Order> update(@Valid @Body Order order) {
     return orderService.save(order);
   }
 
   @Get("/{id}")
   @SingleResult
-  Maybe<Order> find(@PathVariable String id) {
+  Mono<Order> find(@PathVariable String id) {
     return orderService.findById(id);
   }
 }
