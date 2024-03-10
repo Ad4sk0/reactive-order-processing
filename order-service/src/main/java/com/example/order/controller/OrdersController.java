@@ -30,12 +30,6 @@ public class OrdersController {
     return orderService.save(order);
   }
 
-  @Put
-  @SingleResult
-  Mono<Order> update(@Valid @Body Order order) {
-    return orderService.save(order);
-  }
-
   @Get("/{id}")
   @SingleResult
   Mono<Order> find(@PathVariable String id) {
