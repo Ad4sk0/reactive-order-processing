@@ -6,4 +6,4 @@ import jakarta.validation.constraints.Positive;
 
 @Embeddable
 public record OrderItemEmbeddable(
-    @NotBlank String productId, @NotBlank String productName, @Positive int quantity) {}
+    @NotBlank String productId, @Positive int quantity) {}

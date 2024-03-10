@@ -5,5 +5,4 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 
 @Serdeable
-public record OrderItem(
-    @NotBlank String productId, @NotBlank String productName, @Positive int quantity) {}
+public record OrderItem(@NotBlank String productId, @Positive int quantity) {}

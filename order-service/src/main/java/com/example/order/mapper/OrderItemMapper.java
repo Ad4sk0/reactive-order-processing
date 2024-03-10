@@ -12,7 +12,7 @@ public class OrderItemMapper {
       return null;
     }
     return new OrderItemEmbeddable(
-        orderItem.productId(), orderItem.productName(), orderItem.quantity());
+        orderItem.productId(), orderItem.quantity());
   }
 
   public static OrderItem toDTO(OrderItemEmbeddable orderItemEmbeddable) {
@@ -21,7 +21,6 @@ public class OrderItemMapper {
     }
     return new OrderItem(
         orderItemEmbeddable.productId(),
-        orderItemEmbeddable.productName(),
         orderItemEmbeddable.quantity());
   }
 }
