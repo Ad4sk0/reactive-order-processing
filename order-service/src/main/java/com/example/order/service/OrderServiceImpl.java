@@ -1,8 +1,10 @@
 package com.example.order.service;
 
+import com.example.models.DeliveryPossibility;
 import com.example.models.Order;
 import com.example.models.OrderItem;
 import com.example.models.Product;
+import com.example.order.client.DeliveryClient;
 import com.example.order.client.InventoryClient;
 import com.example.order.mapper.OrderMapper;
 import com.example.order.repository.OrderRepository;
@@ -22,11 +24,16 @@ public class OrderServiceImpl implements OrderService {
 
   private final OrderRepository orderRepository;
   private final InventoryClient inventoryClient;
+  private final DeliveryClient deliveryClient;
   private static final Logger LOG = LoggerFactory.getLogger(OrderServiceImpl.class);
 
-  public OrderServiceImpl(OrderRepository orderRepository, InventoryClient inventoryClient) {
+  public OrderServiceImpl(
+      OrderRepository orderRepository,
+      InventoryClient inventoryClient,
+      DeliveryClient deliveryClient) {
     this.orderRepository = orderRepository;
     this.inventoryClient = inventoryClient;
+    this.deliveryClient = deliveryClient;
   }
 
   @Override
@@ -46,41 +53,60 @@ public class OrderServiceImpl implements OrderService {
       throw new IllegalArgumentException("Duplicate products in order items found");
     }
 
-    Flux<Product> inventoryProductFlux =
-        inventoryClient
-            .fetchProducts(productIds)
-            .doOnError(
-                throwable -> {
-                  LOG.info("Error fetching products from inventory: {}", throwable.getMessage());
-                  throw new IllegalArgumentException("Unable to fetch given product ids");
-                })
-            .collectList()
-            .flatMapMany(
-                list -> {
-                  if (list.size() != productIds.size()) {
-                    LOG.info(
-                        "Unable to find all product ids in inventory: inventory products size {} vs. order products size {}",
-                        list.size(),
-                        productIds.size());
-                    throw new IllegalArgumentException("Unable to find given product ids");
-                  }
-                  return Flux.fromIterable(list);
-                })
-            .flatMap(
-                product -> {
-                  if (product.status().quantity() < orderQuantities.get(product.id())) {
-                    return Mono.error(
-                        new ValidationException(
-                            "Not enough quantity for product: " + product.name()));
-                  }
-                  return Mono.just(product);
-                });
+    Flux<Product> inventoryProductFlux = checkIfProductsAreAvailable(productIds, orderQuantities);
+    Mono<DeliveryPossibility> checkDeliveryPossibilityMono = checkIfDeliveryIsPossible(order);
 
-    return inventoryProductFlux
-        .collectList()
-        .flatMapMany(inventoryProducts -> orderRepository.save(OrderMapper.toEntity(order)))
-        .next()
+    return Mono.zip(inventoryProductFlux.collectList(), checkDeliveryPossibilityMono)
+        .flatMap(tuple -> orderRepository.save(OrderMapper.toEntity(order)))
         .map(OrderMapper::toDTO);
+  }
+
+  private Mono<DeliveryPossibility> checkIfDeliveryIsPossible(Order order) {
+    return deliveryClient
+        .checkDeliveryPossibility(order.getDeliveryInfo().city(), order.getDeliveryInfo().street())
+        .doOnError(
+            throwable -> {
+              LOG.info("Error checking delivery possibility: {}", throwable.getMessage());
+              throw new IllegalArgumentException("Unable to check delivery possibility");
+            })
+        .map(
+            deliveryPossibility -> {
+              if (!deliveryPossibility.isDeliveryPossible()) {
+                throw new ValidationException("Delivery not possible");
+              }
+              return deliveryPossibility;
+            });
+  }
+
+  private Flux<Product> checkIfProductsAreAvailable(
+      Set<String> productIds, Map<String, Integer> orderQuantities) {
+    return inventoryClient
+        .fetchProducts(productIds)
+        .doOnError(
+            throwable -> {
+              LOG.info("Error fetching products from inventory: {}", throwable.getMessage());
+              throw new IllegalArgumentException("Unable to fetch given product ids");
+            })
+        .collectList()
+        .flatMapMany(
+            list -> {
+              if (list.size() != productIds.size()) {
+                LOG.info(
+                    "Unable to find all product ids in inventory: inventory products size {} vs. order products size {}",
+                    list.size(),
+                    productIds.size());
+                throw new IllegalArgumentException("Unable to find given product ids");
+              }
+              return Flux.fromIterable(list);
+            })
+        .flatMap(
+            product -> {
+              if (product.status().quantity() < orderQuantities.get(product.id())) {
+                return Mono.error(
+                    new ValidationException("Not enough quantity for product: " + product.name()));
+              }
+              return Mono.just(product);
+            });
   }
 
   @Override
