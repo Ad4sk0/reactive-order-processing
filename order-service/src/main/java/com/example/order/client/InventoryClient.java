@@ -6,6 +6,7 @@ import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.client.annotation.Client;
 import java.util.List;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Client(id = "inventory")
@@ -13,4 +14,7 @@ public interface InventoryClient {
 
   @Post("/product-order-possibility")
   Mono<ProductOrderPossibility> getProductOrderPossibility(@Body List<ProductOrder> productOrder);
+
+  @Post("/product-orders")
+  Flux<ProductOrder> createProductOrder(@Body List<ProductOrder> productOrder);
 }

@@ -17,6 +17,7 @@ import java.util.List;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -111,6 +112,8 @@ class OrderServiceImplTest {
     InventoryClient inventoryClientMock = mock(InventoryClient.class);
     when(inventoryClientMock.getProductOrderPossibility(any()))
         .thenReturn(Mono.just(new ProductOrderPossibility(true, null)));
+    when(inventoryClientMock.createProductOrder(any()))
+        .thenReturn(Flux.just(new ProductOrder(createObjectId("1"), createObjectId("1"), 1)));
     return inventoryClientMock;
   }
 

@@ -47,8 +47,10 @@ public class OrderServiceImpl implements OrderService {
     Mono<DeliveryPossibility> checkDeliveryPossibilityMono = checkIfDeliveryIsPossible(order);
 
     return Mono.zip(productOrderPossibilityMono, checkDeliveryPossibilityMono)
-        .flatMap(tuple -> orderRepository.save(OrderMapper.toEntity(order)))
-        .map(OrderMapper::toDTO);
+        .flatMapMany(x -> inventoryClient.createProductOrder(productOrdersDTOs))
+        .flatMap(productOrderFlux -> orderRepository.save(OrderMapper.toEntity(order)))
+        .map(OrderMapper::toDTO)
+        .single();
   }
 
   private Mono<ProductOrderPossibility> checkIfProductsAreAvailable(
@@ -59,7 +61,8 @@ public class OrderServiceImpl implements OrderService {
         .doOnError(
             throwable -> {
               LOG.info("Error checking product order possibility: {}", throwable.getMessage());
-              throw new ConnectionException("Unable to check product order possibility");
+              throw new ConnectionException(
+                  "Unable to check product order possibility in inventory service");
             })
         .map(
             productOrderPossibility -> {
@@ -76,7 +79,8 @@ public class OrderServiceImpl implements OrderService {
         .doOnError(
             throwable -> {
               LOG.info("Error checking delivery possibility: {}", throwable.getMessage());
-              throw new ConnectionException("Unable to check delivery possibility");
+              throw new ConnectionException(
+                  "Unable to check delivery possibility in delivery service");
             })
         .map(
             deliveryPossibility -> {
