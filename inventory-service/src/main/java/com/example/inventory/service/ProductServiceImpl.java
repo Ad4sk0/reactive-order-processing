@@ -36,6 +36,11 @@ public class ProductServiceImpl implements ProductService {
     }
   }
 
+  @Override
+  public Flux<Product> updateAll(List<Product> products) {
+    return updateProducts(products);
+  }
+
   private Mono<Product> createProduct(Product product) {
     Product productToSave;
     if (product.status() == null) {
@@ -63,6 +68,25 @@ public class ProductServiceImpl implements ProductService {
                 new ValidationException(
                     String.format("Product with id %s does not exist", product.id()))))
         .flatMap(exisitingProduct -> productRepository.update(ProductMapper.toEntity(product)))
+        .map(ProductMapper::toDTO);
+  }
+
+  private Flux<Product> updateProducts(List<Product> products) {
+    return findByIds(products.stream().map(Product::id).toList())
+        .collectList()
+        .flatMapMany(
+            existingProducts -> {
+              if (existingProducts.size() != products.size()) {
+                return Flux.error(
+                    new ValidationException(
+                        "Unable to update products. Some of the products were not found"));
+              }
+              return Flux.fromIterable(products);
+            })
+        .map(ProductMapper::toEntity)
+        .collectList()
+        .log()
+        .flatMapMany(productRepository::updateAll)
         .map(ProductMapper::toDTO);
   }
 

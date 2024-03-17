@@ -7,9 +7,8 @@ import io.micronaut.transaction.annotation.Transactional;
 import jakarta.inject.Singleton;
 import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotNull;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.bson.types.ObjectId;
 import reactor.core.publisher.Flux;
@@ -34,25 +33,12 @@ public class ProductOrderServiceImpl implements ProductOrderService {
 
   @Override
   public Mono<ProductOrder> save(ProductOrder productOrder) {
-
-    Mono<Product> productMono =
-        productService
-            .findById(productOrder.productId())
-            .switchIfEmpty(
-                Mono.error(
-                    new ValidationException(
-                        String.format(
-                            "Product with id %s does not exist", productOrder.productId()))));
-
-    return productMono.flatMap(
-        product -> {
-          if (product.status().quantity() < productOrder.quantity()) {
-            throw new ValidationException(
-                String.format(
-                    "Product with id %s does not have enough quantity", productOrder.productId()));
-          }
-          return processProductOrder(product, productOrder);
-        });
+    return saveProducts(
+            Collections.singletonList(productOrder),
+            details ->
+                createErrorMessageFromProductOrderPossibilityDetails(
+                    details, productOrder.productId()))
+        .single();
   }
 
   @Override
@@ -83,30 +69,58 @@ public class ProductOrderServiceImpl implements ProductOrderService {
                     false, ProductOrderPossibilityErrorReason.SOME_PRODUCTS_DO_NOT_EXIST));
   }
 
+  private Flux<ProductOrder> saveProducts(
+      List<ProductOrder> productOrders,
+      Function<ProductOrderPossibilityDetails, String> errorMessageProvider) {
+
+    Mono<ProductOrderPossibility> isProductOrderPossibleMono =
+        isProductOrderPossible(productOrders);
+
+    return isProductOrderPossibleMono.flatMapMany(
+        orderPossibility -> {
+          if (!orderPossibility.isPossible()) {
+            throw new ValidationException(errorMessageProvider.apply(orderPossibility.details()));
+          }
+          return findProductsForAllProductOrders(productOrders)
+              .collectList()
+              .flatMapMany(products -> processProductOrders(products, productOrders));
+        });
+  }
+
   @Transactional
-  Mono<ProductOrder> processProductOrder(Product product, ProductOrder productOrder) {
-    Mono<Product> productMono = updateProductStatus(product, productOrder);
-    Mono<ProductOrder> productOrderMono = persist(productOrder);
-
-    return Mono.zip(productMono, productOrderMono, (status, order) -> order);
+  Flux<ProductOrder> processProductOrders(
+      List<Product> products, List<ProductOrder> productOrders) {
+    Flux<Product> updateProductStatusesFlux = updateProductStatuses(products, productOrders);
+    Flux<ProductOrder> persistProductOrdersFlux = persist(productOrders);
+    return Flux.zip(updateProductStatusesFlux, persistProductOrdersFlux, (product, order) -> order);
   }
 
-  private Mono<Product> updateProductStatus(Product product, ProductOrder productOrder) {
-    ProductStatus updatedProductStatus =
-        new ProductStatus(product.status().quantity() - productOrder.quantity());
-    return productService.save(product.withStatus(updatedProductStatus));
-  }
+  private Flux<Product> updateProductStatuses(
+      List<Product> products, List<ProductOrder> productOrders) {
+    Map<String, Product> productIdToProductMap =
+        products.stream().collect(Collectors.toMap(Product::id, product -> product));
 
-  private Mono<ProductOrder> persist(ProductOrder productOrder) {
-    if (productOrder.id() == null) {
-      return productOrderRepository
-          .save(ProductOrderMapper.toEntity(productOrder))
-          .map(ProductOrderMapper::toDTO);
-    } else {
-      return productOrderRepository
-          .update(ProductOrderMapper.toEntity(productOrder))
-          .map(ProductOrderMapper::toDTO);
+    List<Product> updatedProducts = new ArrayList<>();
+    for (ProductOrder productOrder : productOrders) {
+      if (!productIdToProductMap.containsKey(productOrder.productId())) {
+        throw new IllegalStateException(
+            "Products list does not contain product order with id " + productOrder.productId());
+      }
+      Product product = productIdToProductMap.get(productOrder.productId());
+      ProductStatus updatedProductStatus =
+          new ProductStatus(product.status().quantity() - productOrder.quantity());
+      updatedProducts.add(product.withStatus(updatedProductStatus));
     }
+    return productService.updateAll(updatedProducts);
+  }
+
+  private Flux<ProductOrder> persist(List<ProductOrder> productOrders) {
+    if (productOrders.stream().anyMatch(productOrder -> productOrder.id() != null)) {
+      throw new UnsupportedOperationException("Update of product order is not supported");
+    }
+    return productOrderRepository
+        .saveAll(productOrders.stream().map(ProductOrderMapper::toEntity).toList())
+        .map(ProductOrderMapper::toDTO);
   }
 
   private Flux<Product> findProductsForAllProductOrders(List<ProductOrder> products) {
@@ -143,5 +157,22 @@ public class ProductOrderServiceImpl implements ProductOrderService {
       boolean isPossible, ProductOrderPossibilityErrorReason reason) {
     return Mono.just(
         new ProductOrderPossibility(isPossible, new ProductOrderPossibilityDetails(reason)));
+  }
+
+  private String createErrorMessageFromProductOrderPossibilityDetails(
+      ProductOrderPossibilityDetails details, String productId) {
+    if (details == null || details.reason() == null) {
+      return "Product order is not possible";
+    }
+
+    if (productId != null) {
+      return switch (details.reason()) {
+        case SOME_PRODUCTS_DO_NOT_EXIST -> "Product with id " + productId + " does not exist";
+        case NOT_ENOUGH_QUANTITY ->
+            "Product with id " + productId + " does not have enough quantity";
+        default -> "Unexpected problem";
+      };
+    }
+    return "Unexpected problem";
   }
 }
