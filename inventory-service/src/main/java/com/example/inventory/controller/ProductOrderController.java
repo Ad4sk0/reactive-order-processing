@@ -6,6 +6,8 @@ import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.*;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import java.util.List;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -24,9 +26,8 @@ public class ProductOrderController {
 
   @Post
   @Status(HttpStatus.CREATED)
-  @SingleResult
-  Mono<ProductOrder> save(@Valid @Body ProductOrder productOrder) {
-    return productOrderService.save(productOrder);
+  Flux<ProductOrder> save(@Valid @Body @NotEmpty List<ProductOrder> productOrders) {
+    return productOrderService.saveAll(productOrders);
   }
 
   @Get("/{id}")

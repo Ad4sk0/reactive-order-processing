@@ -12,6 +12,8 @@ public interface ProductOrderService {
 
   Mono<ProductOrder> save(ProductOrder product);
 
+  Flux<ProductOrder> saveAll(List<ProductOrder> products);
+
   Mono<ProductOrder> findById(String id);
 
   Mono<ProductOrderPossibility> isProductOrderPossible(List<ProductOrder> products);

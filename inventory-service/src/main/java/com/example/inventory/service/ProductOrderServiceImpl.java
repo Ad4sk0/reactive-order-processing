@@ -42,6 +42,13 @@ public class ProductOrderServiceImpl implements ProductOrderService {
   }
 
   @Override
+  public Flux<ProductOrder> saveAll(List<ProductOrder> productOrders) {
+    return saveProducts(
+            productOrders,
+            details -> createErrorMessageFromProductOrderPossibilityDetails(details, null));
+  }
+
+  @Override
   public Mono<ProductOrder> findById(@NotNull String id) {
     return productOrderRepository.findById(new ObjectId(id)).map(ProductOrderMapper::toDTO);
   }
@@ -160,7 +167,7 @@ public class ProductOrderServiceImpl implements ProductOrderService {
   }
 
   private String createErrorMessageFromProductOrderPossibilityDetails(
-      ProductOrderPossibilityDetails details, String productId) {
+          ProductOrderPossibilityDetails details, String productId) {
     if (details == null || details.reason() == null) {
       return "Product order is not possible";
     }
@@ -169,10 +176,15 @@ public class ProductOrderServiceImpl implements ProductOrderService {
       return switch (details.reason()) {
         case SOME_PRODUCTS_DO_NOT_EXIST -> "Product with id " + productId + " does not exist";
         case NOT_ENOUGH_QUANTITY ->
-            "Product with id " + productId + " does not have enough quantity";
+                "Product with id " + productId + " does not have enough quantity";
         default -> "Unexpected problem";
       };
     }
-    return "Unexpected problem";
+
+    return switch (details.reason()) {
+      case DUPLICATE_IN_PRODUCT_ORDER_LIST -> "Duplicate product in product order list found";
+      case SOME_PRODUCTS_DO_NOT_EXIST -> "Some of the ordered products do not exist";
+      case NOT_ENOUGH_QUANTITY -> "Some of the ordered products do not have enough quantity";
+    };
   }
 }

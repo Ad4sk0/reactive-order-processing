@@ -8,6 +8,7 @@ import com.example.models.ProductOrder;
 import com.example.models.ProductStatus;
 import com.example.models.ProductType;
 import io.restassured.specification.RequestSpecification;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class ProductOrderControllerTestIT extends AbstractContainersTest {
@@ -20,27 +21,27 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
     Product product =
         new Product(null, "test-product-order-1", ProductType.PIZZA, new ProductStatus(3));
     Product createdProduct = createProduct(spec, product);
-    ProductOrder productOrder = new ProductOrder(null, createdProduct.id(), 1);
+    List<ProductOrder> productOrders = List.of(new ProductOrder(null, createdProduct.id(), 1));
 
     spec.given()
         .contentType("application/json")
-        .body(productOrder)
+        .body(productOrders)
         .when()
         .post(ENDPOINT)
         .then()
         .statusCode(201)
         .body(
-            "productId", equalTo(createdProduct.id()),
-            "quantity", equalTo(1));
+            "productId[0]", equalTo(createdProduct.id()),
+            "quantity[0]", equalTo(1));
   }
 
   @Test
   void shouldNotCreateProductOrderIfProductIdNotSpecified(RequestSpecification spec) {
-    ProductOrder productOrder = new ProductOrder(null, null, 1);
+    List<ProductOrder> productOrders = List.of(new ProductOrder(null, null, 1));
 
     spec.given()
         .contentType("application/json")
-        .body(productOrder)
+        .body(productOrders)
         .when()
         .post(ENDPOINT)
         .then()
@@ -49,11 +50,12 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
 
   @Test
   void shouldNotCreateProductOrderIfProductIdDoesNotExist(RequestSpecification spec) {
-    ProductOrder productOrder = new ProductOrder(null, "323456789123456789123456", 1);
+    List<ProductOrder> productOrders =
+        List.of(new ProductOrder(null, "323456789123456789123456", 1));
 
     spec.given()
         .contentType("application/json")
-        .body(productOrder)
+        .body(productOrders)
         .when()
         .post(ENDPOINT)
         .then()
@@ -65,11 +67,11 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
     Product product =
         new Product(null, "test-product-order-2", ProductType.PIZZA, new ProductStatus(3));
     Product createdProduct = createProduct(spec, product);
-    ProductOrder productOrder = new ProductOrder(null, createdProduct.id(), 4);
+    List<ProductOrder> productOrders = List.of(new ProductOrder(null, createdProduct.id(), 4));
 
     spec.given()
         .contentType("application/json")
-        .body(productOrder)
+        .body(productOrders)
         .when()
         .post(ENDPOINT)
         .then()
@@ -81,7 +83,7 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
     Product product =
         new Product(null, "test-product-order-3", ProductType.PIZZA, new ProductStatus(3));
     Product createdProduct = createProduct(spec, product);
-    ProductOrder productOrder = new ProductOrder(null, createdProduct.id(), 1);
+    List<ProductOrder> productOrders = List.of(new ProductOrder(null, createdProduct.id(), 1));
 
     spec.given()
         .contentType("application/json")
@@ -91,7 +93,7 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
         .statusCode(200)
         .body("status.quantity", equalTo(3));
 
-    spec.given().contentType("application/json").body(productOrder).post(ENDPOINT);
+    spec.given().contentType("application/json").body(productOrders).post(ENDPOINT);
 
     spec.given()
         .contentType("application/json")
@@ -100,6 +102,94 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
         .then()
         .statusCode(200)
         .body("status.quantity", equalTo(2));
+  }
+
+  @Test
+  void shouldCreateMultipleProductOrders(RequestSpecification spec) {
+    Product product1 =
+        new Product(null, "test-product-order-4", ProductType.PIZZA, new ProductStatus(3));
+    Product product2 =
+        new Product(null, "test-product-order-5", ProductType.PIZZA, new ProductStatus(3));
+    Product createdProduct1 = createProduct(spec, product1);
+    Product createdProduct2 = createProduct(spec, product2);
+    List<ProductOrder> productOrders =
+        List.of(
+            new ProductOrder(null, createdProduct1.id(), 1),
+            new ProductOrder(null, createdProduct2.id(), 1));
+
+    spec.given()
+        .contentType("application/json")
+        .body(productOrders)
+        .when()
+        .post(ENDPOINT)
+        .then()
+        .statusCode(201)
+        .body(
+                "productId[0]", equalTo(createdProduct1.id()),
+                "quantity[0]", equalTo(1),
+                "productId[1]", equalTo(createdProduct2.id()),
+                "quantity[1]", equalTo(1)
+        );
+
+    spec.given()
+            .contentType("application/json")
+            .when()
+            .get(PRODUCTS_ENDPOINT + "/" + createdProduct1.id())
+            .then()
+            .statusCode(200)
+            .body("status.quantity", equalTo(2));
+
+    spec.given()
+            .contentType("application/json")
+            .when()
+            .get(PRODUCTS_ENDPOINT + "/" + createdProduct2.id())
+            .then()
+            .statusCode(200)
+            .body("status.quantity", equalTo(2));
+
+  }
+
+  @Test
+  void shouldNotCreateMultipleProductOrdersIfProductOrdersContainDuplicates(
+      RequestSpecification spec) {
+    Product product =
+        new Product(null, "test-product-order-6", ProductType.PIZZA, new ProductStatus(3));
+    Product createdProduct = createProduct(spec, product);
+    List<ProductOrder> productOrders =
+        List.of(
+            new ProductOrder(null, createdProduct.id(), 1),
+            new ProductOrder(null, createdProduct.id(), 1));
+
+    spec.given()
+        .contentType("application/json")
+        .body(productOrders)
+        .when()
+        .post(ENDPOINT)
+        .then()
+        .statusCode(500);
+  }
+
+  @Test
+  void shouldNotCreateMultipleProductOrdersIfOneOfProductHasNotEnoughQuantity(
+      RequestSpecification spec) {
+    Product product1 =
+        new Product(null, "test-product-order-7", ProductType.PIZZA, new ProductStatus(3));
+    Product product2 =
+        new Product(null, "test-product-order-8", ProductType.PIZZA, new ProductStatus(3));
+    Product createdProduct1 = createProduct(spec, product1);
+    Product createdProduct2 = createProduct(spec, product2);
+    List<ProductOrder> productOrders =
+        List.of(
+            new ProductOrder(null, createdProduct1.id(), 1),
+            new ProductOrder(null, createdProduct2.id(), 4));
+
+    spec.given()
+        .contentType("application/json")
+        .body(productOrders)
+        .when()
+        .post(ENDPOINT)
+        .then()
+        .statusCode(500);
   }
 
   private Product createProduct(RequestSpecification spec, Product product) {
