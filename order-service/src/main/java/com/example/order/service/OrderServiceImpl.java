@@ -1,18 +1,14 @@
 package com.example.order.service;
 
-import com.example.models.DeliveryPossibility;
-import com.example.models.Order;
-import com.example.models.OrderItem;
-import com.example.models.Product;
+import com.example.models.*;
 import com.example.order.client.DeliveryClient;
 import com.example.order.client.InventoryClient;
 import com.example.order.mapper.OrderMapper;
 import com.example.order.repository.OrderRepository;
+import io.micronaut.data.connection.exceptions.ConnectionException;
 import jakarta.inject.Singleton;
 import jakarta.validation.ValidationException;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.List;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,21 +40,34 @@ public class OrderServiceImpl implements OrderService {
   @Override
   public Mono<Order> save(Order order) {
 
-    Map<String, Integer> orderQuantities =
-        order.getItems().stream()
-            .collect(Collectors.toMap(OrderItem::productId, OrderItem::quantity, (a, b) -> a));
-    Set<String> productIds = orderQuantities.keySet();
+    List<ProductOrder> productOrdersDTOs = createProductOrdersDTOs(order);
 
-    if (order.getItems().size() != productIds.size()) {
-      throw new IllegalArgumentException("Duplicate products in order items found");
-    }
-
-    Flux<Product> inventoryProductFlux = checkIfProductsAreAvailable(productIds, orderQuantities);
+    Mono<ProductOrderPossibility> productOrderPossibilityMono =
+        checkIfProductsAreAvailable(productOrdersDTOs);
     Mono<DeliveryPossibility> checkDeliveryPossibilityMono = checkIfDeliveryIsPossible(order);
 
-    return Mono.zip(inventoryProductFlux.collectList(), checkDeliveryPossibilityMono)
+    return Mono.zip(productOrderPossibilityMono, checkDeliveryPossibilityMono)
         .flatMap(tuple -> orderRepository.save(OrderMapper.toEntity(order)))
         .map(OrderMapper::toDTO);
+  }
+
+  private Mono<ProductOrderPossibility> checkIfProductsAreAvailable(
+      List<ProductOrder> productOrders) {
+
+    return inventoryClient
+        .getProductOrderPossibility(productOrders)
+        .doOnError(
+            throwable -> {
+              LOG.info("Error checking product order possibility: {}", throwable.getMessage());
+              throw new ConnectionException("Unable to check product order possibility");
+            })
+        .map(
+            productOrderPossibility -> {
+              if (!productOrderPossibility.isPossible()) {
+                throw new ValidationException("Product order not possible");
+              }
+              return productOrderPossibility;
+            });
   }
 
   private Mono<DeliveryPossibility> checkIfDeliveryIsPossible(Order order) {
@@ -67,7 +76,7 @@ public class OrderServiceImpl implements OrderService {
         .doOnError(
             throwable -> {
               LOG.info("Error checking delivery possibility: {}", throwable.getMessage());
-              throw new IllegalArgumentException("Unable to check delivery possibility");
+              throw new ConnectionException("Unable to check delivery possibility");
             })
         .map(
             deliveryPossibility -> {
@@ -78,39 +87,14 @@ public class OrderServiceImpl implements OrderService {
             });
   }
 
-  private Flux<Product> checkIfProductsAreAvailable(
-      Set<String> productIds, Map<String, Integer> orderQuantities) {
-    return inventoryClient
-        .fetchProducts(productIds)
-        .doOnError(
-            throwable -> {
-              LOG.info("Error fetching products from inventory: {}", throwable.getMessage());
-              throw new IllegalArgumentException("Unable to fetch given product ids");
-            })
-        .collectList()
-        .flatMapMany(
-            list -> {
-              if (list.size() != productIds.size()) {
-                LOG.info(
-                    "Unable to find all product ids in inventory: inventory products size {} vs. order products size {}",
-                    list.size(),
-                    productIds.size());
-                throw new IllegalArgumentException("Unable to find given product ids");
-              }
-              return Flux.fromIterable(list);
-            })
-        .flatMap(
-            product -> {
-              if (product.status().quantity() < orderQuantities.get(product.id())) {
-                return Mono.error(
-                    new ValidationException("Not enough quantity for product: " + product.name()));
-              }
-              return Mono.just(product);
-            });
-  }
-
   @Override
   public Mono<Order> findById(String id) {
     return orderRepository.findById(new ObjectId(id)).map(OrderMapper::toDTO);
+  }
+
+  private List<ProductOrder> createProductOrdersDTOs(Order order) {
+    return order.getItems().stream()
+        .map(orderItem -> new ProductOrder(null, orderItem.productId(), orderItem.quantity()))
+        .toList();
   }
 }
