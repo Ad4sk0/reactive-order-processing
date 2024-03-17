@@ -2,13 +2,15 @@ package com.example.inventory.service;
 
 import com.example.inventory.mapper.ProductOrderMapper;
 import com.example.inventory.repository.ProductOrderRepository;
-import com.example.models.Product;
-import com.example.models.ProductOrder;
-import com.example.models.ProductStatus;
+import com.example.models.*;
 import io.micronaut.transaction.annotation.Transactional;
 import jakarta.inject.Singleton;
 import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotNull;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.bson.types.ObjectId;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -58,6 +60,29 @@ public class ProductOrderServiceImpl implements ProductOrderService {
     return productOrderRepository.findById(new ObjectId(id)).map(ProductOrderMapper::toDTO);
   }
 
+  @Override
+  public Mono<ProductOrderPossibility> isProductOrderPossible(List<ProductOrder> productOrders) {
+    if (containsDuplicateProductIds(productOrders)) {
+      return createOrderPossibilityMono(
+          false, ProductOrderPossibilityErrorReason.DUPLICATE_IN_PRODUCT_ORDER_LIST);
+    }
+    return findProductsForAllProductOrders(productOrders)
+        .collectList()
+        .flatMap(
+            productList -> {
+              if (containsProductWithNotEnoughQuantity(productList, productOrders)) {
+                return createOrderPossibilityMono(
+                    false, ProductOrderPossibilityErrorReason.NOT_ENOUGH_QUANTITY);
+              }
+              return createOrderPossibilityMono(true, null);
+            })
+        .onErrorResume(
+            ValidationException.class,
+            throwable ->
+                createOrderPossibilityMono(
+                    false, ProductOrderPossibilityErrorReason.SOME_PRODUCTS_DO_NOT_EXIST));
+  }
+
   @Transactional
   Mono<ProductOrder> processProductOrder(Product product, ProductOrder productOrder) {
     Mono<Product> productMono = updateProductStatus(product, productOrder);
@@ -82,5 +107,41 @@ public class ProductOrderServiceImpl implements ProductOrderService {
           .update(ProductOrderMapper.toEntity(productOrder))
           .map(ProductOrderMapper::toDTO);
     }
+  }
+
+  private Flux<Product> findProductsForAllProductOrders(List<ProductOrder> products) {
+    List<String> productIds = products.stream().map(ProductOrder::productId).toList();
+    return productService.findByIds(productIds);
+  }
+
+  private boolean containsDuplicateProductIds(List<ProductOrder> products) {
+    Set<String> productIdsSet =
+        products.stream().map(ProductOrder::productId).collect(Collectors.toSet());
+    return productIdsSet.size() != products.size();
+  }
+
+  private boolean containsProductWithNotEnoughQuantity(
+      List<Product> productList, List<ProductOrder> productOrders) {
+    Map<String, ProductStatus> productsWithNotEnoughQuantity =
+        findProductsWithNotEnoughQuantity(productList, createOrderQuantitiesMap(productOrders));
+    return !productsWithNotEnoughQuantity.isEmpty();
+  }
+
+  private Map<String, ProductStatus> findProductsWithNotEnoughQuantity(
+      List<Product> products, Map<String, Integer> orderQuantities) {
+    return products.stream()
+        .filter(product -> product.status().quantity() < orderQuantities.get(product.id()))
+        .collect(Collectors.toMap(Product::id, Product::status));
+  }
+
+  private Map<String, Integer> createOrderQuantitiesMap(List<ProductOrder> products) {
+    return products.stream()
+        .collect(Collectors.toMap(ProductOrder::productId, ProductOrder::quantity, (a, b) -> a));
+  }
+
+  private Mono<ProductOrderPossibility> createOrderPossibilityMono(
+      boolean isPossible, ProductOrderPossibilityErrorReason reason) {
+    return Mono.just(
+        new ProductOrderPossibility(isPossible, new ProductOrderPossibilityDetails(reason)));
   }
 }
