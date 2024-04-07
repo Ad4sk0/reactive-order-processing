@@ -27,6 +27,7 @@ public class OrderMapper {
                 .map(orderItems -> orderItems.stream().map(OrderItemMapper::toDTO).toList())
                 .orElse(null))
         .deliveryInfo(DeliveryInfoMapper.toDTO(orderEntity.getDeliveryInfo()))
+        .deliveryId(orderEntity.getDeliveryId().toString())
         .build();
   }
 }

@@ -101,6 +101,7 @@ class OrderServiceImplTest {
               return Mono.just(
                   OrderEntity.builder()
                       .id(new ObjectId(createObjectId("1")))
+                      .deliveryId(new ObjectId(createObjectId("1")))
                       .orderItems(orderEntity.getOrderItems())
                       .deliveryInfo(orderEntity.getDeliveryInfo())
                       .build());
@@ -121,6 +122,12 @@ class OrderServiceImplTest {
     DeliveryClient deliveryClientMock = mock(DeliveryClient.class);
     when(deliveryClientMock.checkDeliveryPossibility(any(), any()))
         .thenReturn(Mono.just(new DeliveryPossibility(true, null, null, null)));
+    when(deliveryClientMock.createDelivery(any()))
+        .thenReturn(
+            Mono.just(
+                new Delivery(
+                    createObjectId("1"), createObjectId("1"), null, null, null, null, null)));
+
     return deliveryClientMock;
   }
 }

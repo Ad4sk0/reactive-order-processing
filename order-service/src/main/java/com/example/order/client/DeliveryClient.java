@@ -1,8 +1,8 @@
 package com.example.order.client;
 
+import com.example.models.Delivery;
 import com.example.models.DeliveryPossibility;
-import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.http.annotation.*;
 import io.micronaut.http.client.annotation.Client;
 import reactor.core.publisher.Mono;
 
@@ -10,5 +10,9 @@ import reactor.core.publisher.Mono;
 public interface DeliveryClient {
 
   @Get("/delivery-possibility")
-  Mono<DeliveryPossibility> checkDeliveryPossibility(@QueryValue String city, @QueryValue String street);
+  Mono<DeliveryPossibility> checkDeliveryPossibility(
+      @QueryValue String city, @QueryValue String street);
+
+  @Post("/deliveries")
+  Mono<Delivery> createDelivery(@Body Delivery delivery);
 }

@@ -3,6 +3,7 @@ package com.example.order.service;
 import com.example.models.*;
 import com.example.order.client.DeliveryClient;
 import com.example.order.client.InventoryClient;
+import com.example.order.entity.OrderEntity;
 import com.example.order.mapper.OrderMapper;
 import com.example.order.repository.OrderRepository;
 import io.micronaut.data.connection.exceptions.ConnectionException;
@@ -47,10 +48,31 @@ public class OrderServiceImpl implements OrderService {
     Mono<DeliveryPossibility> checkDeliveryPossibilityMono = checkIfDeliveryIsPossible(order);
 
     return Mono.zip(productOrderPossibilityMono, checkDeliveryPossibilityMono)
-        .flatMapMany(x -> inventoryClient.createProductOrder(productOrdersDTOs))
-        .flatMap(productOrderFlux -> orderRepository.save(OrderMapper.toEntity(order)))
+        .flatMapMany(__ -> proceedOrder(order, productOrdersDTOs))
         .map(OrderMapper::toDTO)
         .single();
+  }
+
+  private Mono<OrderEntity> proceedOrder(Order order, List<ProductOrder> productOrdersDTOs) {
+    return orderRepository
+        .save(OrderMapper.toEntity(order))
+        .flatMap(
+            orderEntity -> createProductsOrderAndDelivery(order, productOrdersDTOs, orderEntity));
+  }
+
+  private Mono<OrderEntity> createProductsOrderAndDelivery(
+      Order order, List<ProductOrder> productOrdersDTOs, OrderEntity orderEntity) {
+    Delivery deliveryBody = createNewDeliveryDto(order, orderEntity);
+    Flux<ProductOrder> productOrderFlux = inventoryClient.createProductOrder(productOrdersDTOs);
+    Mono<Delivery> deliveryMono = deliveryClient.createDelivery(deliveryBody);
+    return Flux.zip(productOrderFlux, deliveryMono)
+        .flatMap(tuple2 -> updateDeliveryId(orderEntity, tuple2.getT2()))
+        .single();
+  }
+
+  private Mono<OrderEntity> updateDeliveryId(OrderEntity orderEntity, Delivery delivery) {
+    orderEntity.setDeliveryId(new ObjectId(delivery.id()));
+    return orderRepository.save(orderEntity);
   }
 
   private Mono<ProductOrderPossibility> checkIfProductsAreAvailable(
@@ -100,5 +122,10 @@ public class OrderServiceImpl implements OrderService {
     return order.getItems().stream()
         .map(orderItem -> new ProductOrder(null, orderItem.productId(), orderItem.quantity()))
         .toList();
+  }
+
+  private Delivery createNewDeliveryDto(Order order, OrderEntity orderEntity) {
+    return new Delivery(
+        null, orderEntity.getId().toString(), order.getDeliveryInfo(), null, null, null, null);
   }
 }

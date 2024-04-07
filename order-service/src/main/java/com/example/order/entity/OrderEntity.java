@@ -21,4 +21,6 @@ public class OrderEntity {
   @Valid @NotEmpty private List<OrderItemEmbeddable> orderItems;
 
   @Valid @NotNull private DeliveryInfoEmbeddable deliveryInfo;
+
+  private ObjectId deliveryId;
 }
