@@ -2,6 +2,7 @@ package com.example.delivery.service;
 
 import com.example.delivery.job.DeliveryJobStatus;
 import com.example.models.Delivery;
+import com.example.models.DeliveryCancellation;
 import com.example.models.DeliveryInfo;
 import com.example.models.DeliveryPossibility;
 import jakarta.validation.Valid;
@@ -22,4 +23,6 @@ public interface DeliveryService {
   Mono<Integer> completeDelivery(DeliveryJobStatus deliveryJobStatus);
 
   Mono<DeliveryPossibility> isDeliveryPossible(@NotNull @Valid DeliveryInfo deliveryInfo);
+
+  Mono<DeliveryCancellation> cancelDelivery(DeliveryCancellation deliveryCancellation);
 }

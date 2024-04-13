@@ -1,6 +1,7 @@
 package com.example.order.client;
 
 import com.example.models.Delivery;
+import com.example.models.DeliveryCancellation;
 import com.example.models.DeliveryPossibility;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.client.annotation.Client;
@@ -15,4 +16,8 @@ public interface DeliveryClient {
 
   @Post("/deliveries")
   Mono<Delivery> createDelivery(@Body Delivery delivery);
+
+  @Post("/delivery-cancellations")
+  Mono<DeliveryCancellation> createDeliveryCancellation(
+      @Body DeliveryCancellation deliveryCancellation);
 }

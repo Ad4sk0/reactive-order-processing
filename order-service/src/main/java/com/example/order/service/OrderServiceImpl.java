@@ -65,15 +65,25 @@ public class OrderServiceImpl implements OrderService {
       Order order, List<ProductOrder> productOrdersDTOs, OrderEntity orderEntity) {
     Delivery deliveryBody = createNewDeliveryDto(order, orderEntity);
     Flux<ProductOrder> productOrderFlux = inventoryClient.createProductOrder(productOrdersDTOs);
-    Mono<Delivery> deliveryMono = deliveryClient.createDelivery(deliveryBody);
+    Mono<Delivery> deliveryMono = deliveryClient.createDelivery(deliveryBody).cache();
+
+    Mono<DeliveryCancellation> cancelDeliveryMono =
+        deliveryMono.flatMap(
+            delivery -> {
+              LOG.info("Cancelling delivery {} ", delivery.id());
+              return deliveryClient.createDeliveryCancellation(
+                  new DeliveryCancellation(null, delivery.id()));
+            });
+
     return Flux.zip(productOrderFlux, deliveryMono)
+        .flatMap(tuple2 -> updateDeliveryId(orderEntity, tuple2.getT2()))
         .onErrorResume(
             InventoryClientException.class,
             throwable -> {
               LOG.error("Failed to create product order");
-              return Mono.error(new IllegalStateException("Unable to create product order"));
+              return cancelDeliveryMono.flatMap(
+                  x -> Mono.error(new IllegalStateException("Unable to create product order")));
             })
-        .flatMap(tuple2 -> updateDeliveryId(orderEntity, tuple2.getT2()))
         .single();
   }
 

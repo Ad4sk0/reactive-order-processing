@@ -145,6 +145,12 @@ public class DeliveryServiceImpl implements DeliveryService {
             });
   }
 
+  @Override
+  public Mono<DeliveryCancellation> cancelDelivery(DeliveryCancellation deliveryCancellation) {
+    LOG.info("Delivery cancellation received for order {}", deliveryCancellation.orderId());
+    return Mono.just(deliveryCancellation);
+  }
+
   private Mono<Object> updateVehicleForCompletedDelivery(
       DeliveryEntity deliveryEntity, ObjectId vehicleId) {
     return vehicleService
