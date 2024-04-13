@@ -3,6 +3,7 @@ package com.example.order.service;
 import com.example.models.*;
 import com.example.order.client.DeliveryClient;
 import com.example.order.client.InventoryClient;
+import com.example.order.client.exception.InventoryClientException;
 import com.example.order.entity.OrderEntity;
 import com.example.order.mapper.OrderMapper;
 import com.example.order.repository.OrderRepository;
@@ -66,6 +67,12 @@ public class OrderServiceImpl implements OrderService {
     Flux<ProductOrder> productOrderFlux = inventoryClient.createProductOrder(productOrdersDTOs);
     Mono<Delivery> deliveryMono = deliveryClient.createDelivery(deliveryBody);
     return Flux.zip(productOrderFlux, deliveryMono)
+        .onErrorResume(
+            InventoryClientException.class,
+            throwable -> {
+              LOG.error("Failed to create product order");
+              return Mono.error(new IllegalStateException("Unable to create product order"));
+            })
         .flatMap(tuple2 -> updateDeliveryId(orderEntity, tuple2.getT2()))
         .single();
   }
