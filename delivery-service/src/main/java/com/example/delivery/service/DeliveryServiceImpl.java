@@ -1,9 +1,11 @@
 package com.example.delivery.service;
 
 import com.example.delivery.entity.*;
+import com.example.delivery.event.DeliveryCanceledEvent;
 import com.example.delivery.event.DeliveryCreatedEvent;
 import com.example.delivery.event.DeliveryEvent;
 import com.example.delivery.job.DeliveryJobStatus;
+import com.example.delivery.mapper.DeliveryCancellationMapper;
 import com.example.delivery.mapper.DeliveryMapper;
 import com.example.delivery.repository.*;
 import com.example.models.*;
@@ -34,13 +36,14 @@ public class DeliveryServiceImpl implements DeliveryService {
       DeliveryLocationService deliveryLocationService,
       DriverService driverService,
       VehicleService vehicleService,
-      ApplicationEventPublisher<DeliveryCreatedEvent> eventPublisher) {
+      DeliveryCancellationRepository deliveryCancellationRepository,
       ApplicationEventPublisher<DeliveryEvent> eventPublisher) {
     this.deliveryRepository = deliveryRepository;
     this.deliveryLocationService = deliveryLocationService;
     this.driverService = driverService;
     this.vehicleService = vehicleService;
     this.eventPublisher = eventPublisher;
+    this.deliveryCancellationRepository = deliveryCancellationRepository;
   }
 
   @Override
@@ -51,6 +54,7 @@ public class DeliveryServiceImpl implements DeliveryService {
   @Override
   @Transactional
   public Mono<Delivery> save(Delivery delivery) {
+    LOG.info("Saving delivery for orderId {}", delivery.orderId());
     if (delivery.id() != null) {
       return Mono.error(new UnsupportedOperationException("Id should not be provided"));
     }
@@ -150,8 +154,28 @@ public class DeliveryServiceImpl implements DeliveryService {
 
   @Override
   public Mono<DeliveryCancellation> cancelDelivery(DeliveryCancellation deliveryCancellation) {
-    LOG.info("Delivery cancellation received for order {}", deliveryCancellation.orderId());
-    return Mono.just(deliveryCancellation);
+    LOG.info("Delivery cancellation received for delivery {}", deliveryCancellation.deliveryId());
+    return deliveryRepository
+        .findById(new ObjectId(deliveryCancellation.deliveryId()))
+        .switchIfEmpty(Mono.error(new IllegalStateException("Delivery not found")))
+        .flatMap(
+            deliveryEntity -> {
+              LOG.info("Cancelling delivery id {}", deliveryEntity._id());
+              if (deliveryEntity.deliveryJobStatusEmbeddable().status()
+                  == DeliveryStatus.DELIVERED) {
+                return Mono.error(
+                    new IllegalStateException(
+                        "Delivery can not be canceled because it has been already delivered"));
+              }
+              eventPublisher.publishEvent(
+                  new DeliveryCanceledEvent(deliveryEntity._id().toString()));
+              return Mono.just(deliveryEntity);
+            })
+        .flatMap(
+            __ ->
+                deliveryCancellationRepository.save(
+                    DeliveryCancellationMapper.toEntity(deliveryCancellation)))
+        .map(DeliveryCancellationMapper::toDTO);
   }
 
   private Mono<Object> updateVehicleForCompletedDelivery(

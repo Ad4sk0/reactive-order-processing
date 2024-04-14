@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import static tests.TestsUtils.createObjectId;
 
 import com.example.delivery.entity.*;
+import com.example.delivery.repository.DeliveryCancellationRepository;
 import com.example.delivery.repository.DeliveryRepository;
 import com.example.models.Delivery;
 import com.example.models.DeliveryInfo;
@@ -42,6 +43,7 @@ class DeliveryServiceImplTest {
             deliveryLocationService,
             driverService,
             vehicleService,
+            createDeliveryCancellationMock(),
             mock(ApplicationEventPublisher.class));
   }
 
@@ -178,5 +180,9 @@ class DeliveryServiceImplTest {
                       deliveryEntity.deliveryJobStatusEmbeddable()));
             });
     return deliveryRepository;
+  }
+
+  DeliveryCancellationRepository createDeliveryCancellationMock() {
+    return mock(DeliveryCancellationRepository.class);
   }
 }

@@ -1,5 +1,6 @@
 package com.example.delivery.job;
 
+import com.example.delivery.event.DeliveryCanceledEvent;
 import com.example.delivery.event.DeliveryCreatedEvent;
 import com.example.delivery.event.DeliveryEvent;
 import com.example.delivery.service.DeliveryService;
@@ -74,6 +75,8 @@ public final class DeliveryJobManagerImpl implements DeliveryJobManager {
   public void onDeliveryEvent(DeliveryEvent deliveryEvent) {
     if (deliveryEvent instanceof DeliveryCreatedEvent deliveryCreatedEvent) {
       enqueueDeliveryJob(deliveryCreatedEvent.deliveryId());
+    } else if (deliveryEvent instanceof DeliveryCanceledEvent deliveryCanceledEvent) {
+      enqueueDeliveryCanceledJob(deliveryCanceledEvent.deliveryId());
     } else {
       LOG.warn("Unknown delivery event: {}", deliveryEvent);
     }
@@ -82,5 +85,10 @@ public final class DeliveryJobManagerImpl implements DeliveryJobManager {
   private void enqueueDeliveryJob(String deliveryId) {
     LOG.info("Starting delivery job for delivery id {}", deliveryId);
     deliveryJobProducer.sendStartDeliveryMessage(deliveryId);
+  }
+
+  private void enqueueDeliveryCanceledJob(String deliveryId) {
+    LOG.info("Starting delivery cancel job for delivery id {}", deliveryId);
+    deliveryJobProducer.sendCancelDeliveryMessage(deliveryId);
   }
 }
