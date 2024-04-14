@@ -3,9 +3,12 @@ package com.example.delivery.job.simulator;
 import static com.example.delivery.job.simulator.DeliveryJobStateUtils.getEstimatedTimeUntilEnd;
 
 import com.example.delivery.job.DeliveryJobStatus;
+import com.example.models.DeliveryStatus;
 import jakarta.inject.Singleton;
 import java.time.Instant;
 import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -19,6 +22,7 @@ public class DeliveryJobStateMachine {
       new ScheduledThreadPoolExecutor(5);
   private static final Random random = new Random();
   private final DeliveryJobStatusProducer deliveryJobStatusProducer;
+  private final Set<String> cancelledJobs = new ConcurrentSkipListSet<>();
 
   public DeliveryJobStateMachine(DeliveryJobStatusProducer deliveryJobStatusProducer) {
     this.deliveryJobStatusProducer = deliveryJobStatusProducer;
@@ -30,8 +34,20 @@ public class DeliveryJobStateMachine {
     executeCurrentStateAndPlanNext(deliveryId, state.getNextState(), getRandomStateDelay(state));
   }
 
+  public void cancelJobExecution(String deliveryId) {
+    LOG.info("Simulator: Cancel delivery job for delivery id {}", deliveryId);
+    cancelledJobs.add(deliveryId);
+  }
+
   private void executeNextState(String deliveryId, DeliveryJobState state) {
     LOG.debug("Simulator: Executing step {} for job : {}", state, deliveryId);
+    if (isCancelled(deliveryId)) {
+      LOG.debug("Simulator: Stopping execution for job : {}", deliveryId);
+      cancelledJobs.remove(deliveryId);
+      sendJobStatusUpdate(
+          new DeliveryJobStatus(deliveryId, DeliveryStatus.CANCELLED, null, Instant.now()));
+      return;
+    }
     var deliveryJobStatus = createCurrentDeliveryJobStatus(deliveryId, state);
     LOG.info("Simulator: Current job status : {}", deliveryJobStatus);
     sendJobStatusUpdate(deliveryJobStatus);
@@ -39,6 +55,10 @@ public class DeliveryJobStateMachine {
       LOG.trace("Simulator: next planed step is {} for job : {}", state.getNextState(), deliveryId);
       executeCurrentStateAndPlanNext(deliveryId, state.getNextState(), getRandomStateDelay(state));
     }
+  }
+
+  private boolean isCancelled(String deliveryId) {
+    return cancelledJobs.contains(deliveryId);
   }
 
   private DeliveryJobStatus createCurrentDeliveryJobStatus(

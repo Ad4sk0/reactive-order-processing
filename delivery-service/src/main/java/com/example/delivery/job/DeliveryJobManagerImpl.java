@@ -46,9 +46,12 @@ public final class DeliveryJobManagerImpl implements DeliveryJobManager {
                     deliveryJobStatus.deliveryId(),
                     e))
         .subscribe();
-    if (deliveryJobStatus.deliveryStatus() == DeliveryStatus.DELIVERED) {
+    if (deliveryJobStatus.deliveryStatus() == DeliveryStatus.DELIVERED
+        || deliveryJobStatus.deliveryStatus() == DeliveryStatus.CANCELLED) {
       LOG.info(
-          "Delivery job for delivery id {} has been completed", deliveryJobStatus.deliveryId());
+          "Delivery job for delivery id {} has been completed with status {}",
+          deliveryJobStatus.deliveryId(),
+          deliveryJobStatus);
       deliveryService
           .completeDelivery(deliveryJobStatus)
           .map(
