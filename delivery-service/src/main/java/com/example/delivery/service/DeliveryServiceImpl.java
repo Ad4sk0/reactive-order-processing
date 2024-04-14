@@ -2,6 +2,7 @@ package com.example.delivery.service;
 
 import com.example.delivery.entity.*;
 import com.example.delivery.event.DeliveryCreatedEvent;
+import com.example.delivery.event.DeliveryEvent;
 import com.example.delivery.job.DeliveryJobStatus;
 import com.example.delivery.mapper.DeliveryMapper;
 import com.example.delivery.repository.*;
@@ -25,7 +26,8 @@ public class DeliveryServiceImpl implements DeliveryService {
   private final DeliveryLocationService deliveryLocationService;
   private final DriverService driverService;
   private final VehicleService vehicleService;
-  private final ApplicationEventPublisher<DeliveryCreatedEvent> eventPublisher;
+  private final DeliveryCancellationRepository deliveryCancellationRepository;
+  private final ApplicationEventPublisher<DeliveryEvent> eventPublisher;
 
   public DeliveryServiceImpl(
       DeliveryRepository deliveryRepository,
@@ -33,6 +35,7 @@ public class DeliveryServiceImpl implements DeliveryService {
       DriverService driverService,
       VehicleService vehicleService,
       ApplicationEventPublisher<DeliveryCreatedEvent> eventPublisher) {
+      ApplicationEventPublisher<DeliveryEvent> eventPublisher) {
     this.deliveryRepository = deliveryRepository;
     this.deliveryLocationService = deliveryLocationService;
     this.driverService = driverService;

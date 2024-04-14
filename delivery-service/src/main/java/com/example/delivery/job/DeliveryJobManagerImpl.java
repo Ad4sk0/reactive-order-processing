@@ -1,6 +1,7 @@
 package com.example.delivery.job;
 
 import com.example.delivery.event.DeliveryCreatedEvent;
+import com.example.delivery.event.DeliveryEvent;
 import com.example.delivery.service.DeliveryService;
 import com.example.models.DeliveryStatus;
 import io.micronaut.runtime.event.annotation.EventListener;
@@ -70,8 +71,12 @@ public final class DeliveryJobManagerImpl implements DeliveryJobManager {
   }
 
   @EventListener
-  public void onDeliveryCreatedEvent(DeliveryCreatedEvent event) {
-    enqueueDeliveryJob(event.deliveryId());
+  public void onDeliveryEvent(DeliveryEvent deliveryEvent) {
+    if (deliveryEvent instanceof DeliveryCreatedEvent deliveryCreatedEvent) {
+      enqueueDeliveryJob(deliveryCreatedEvent.deliveryId());
+    } else {
+      LOG.warn("Unknown delivery event: {}", deliveryEvent);
+    }
   }
 
   private void enqueueDeliveryJob(String deliveryId) {

@@ -1,3 +1,3 @@
 package com.example.delivery.event;
 
-public record DeliveryCreatedEvent(String deliveryId) {}
+public record DeliveryCreatedEvent(String deliveryId) implements DeliveryEvent {}
