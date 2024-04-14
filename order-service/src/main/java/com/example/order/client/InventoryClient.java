@@ -1,6 +1,7 @@
 package com.example.order.client;
 
 import com.example.models.ProductOrder;
+import com.example.models.ProductOrderCancellation;
 import com.example.models.ProductOrderPossibility;
 import com.example.order.client.exception.InventoryClientException;
 import com.example.order.client.filter.InventoryClientFilter;
@@ -21,4 +22,8 @@ public interface InventoryClient {
   @Post("/product-orders")
   Flux<ProductOrder> createProductOrder(@Body List<ProductOrder> productOrder)
       throws InventoryClientException;
+
+  @Post("/product-order-cancellations")
+  Flux<ProductOrderCancellation> createProductOrderCancellations(
+      @Body List<ProductOrderCancellation> productOrderCancellations);
 }

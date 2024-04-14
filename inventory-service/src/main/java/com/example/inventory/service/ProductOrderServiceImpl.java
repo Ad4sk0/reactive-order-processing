@@ -11,12 +11,14 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Singleton
 public class ProductOrderServiceImpl implements ProductOrderService {
-
+  private static final Logger LOG = LoggerFactory.getLogger(ProductOrderServiceImpl.class);
   private final ProductOrderRepository productOrderRepository;
   private final ProductService productService;
 
@@ -44,8 +46,18 @@ public class ProductOrderServiceImpl implements ProductOrderService {
   @Override
   public Flux<ProductOrder> saveAll(List<ProductOrder> productOrders) {
     return saveProducts(
-            productOrders,
-            details -> createErrorMessageFromProductOrderPossibilityDetails(details, null));
+        productOrders,
+        details -> createErrorMessageFromProductOrderPossibilityDetails(details, null));
+  }
+
+  @Override
+  public Flux<ProductOrderCancellation> cancelAll(List<ProductOrderCancellation> cancellations) {
+
+    LOG.info("Cancelling product orders");
+    for (ProductOrderCancellation cancellation : cancellations) {
+      LOG.info("Cancelling product order with id {}", cancellation.productOrderId());
+    }
+    return Flux.fromIterable(cancellations);
   }
 
   @Override
@@ -167,7 +179,7 @@ public class ProductOrderServiceImpl implements ProductOrderService {
   }
 
   private String createErrorMessageFromProductOrderPossibilityDetails(
-          ProductOrderPossibilityDetails details, String productId) {
+      ProductOrderPossibilityDetails details, String productId) {
     if (details == null || details.reason() == null) {
       return "Product order is not possible";
     }
@@ -176,7 +188,7 @@ public class ProductOrderServiceImpl implements ProductOrderService {
       return switch (details.reason()) {
         case SOME_PRODUCTS_DO_NOT_EXIST -> "Product with id " + productId + " does not exist";
         case NOT_ENOUGH_QUANTITY ->
-                "Product with id " + productId + " does not have enough quantity";
+            "Product with id " + productId + " does not have enough quantity";
         default -> "Unexpected problem";
       };
     }

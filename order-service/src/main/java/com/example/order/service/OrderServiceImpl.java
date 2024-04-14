@@ -65,7 +65,8 @@ public class OrderServiceImpl implements OrderService {
   private Mono<OrderEntity> createProductsOrderAndDelivery(
       Order order, List<ProductOrder> productOrdersDTOs, OrderEntity orderEntity) {
     Delivery deliveryBody = createNewDeliveryDto(order, orderEntity);
-    Flux<ProductOrder> productOrderFlux = inventoryClient.createProductOrder(productOrdersDTOs);
+    Flux<ProductOrder> productOrderFlux =
+        inventoryClient.createProductOrder(productOrdersDTOs).cache();
     Mono<Delivery> deliveryMono = deliveryClient.createDelivery(deliveryBody).cache();
 
     Mono<DeliveryCancellation> cancelDeliveryMono =
@@ -75,6 +76,25 @@ public class OrderServiceImpl implements OrderService {
               return deliveryClient.createDeliveryCancellation(
                   new DeliveryCancellation(null, delivery.id()));
             });
+
+    Flux<ProductOrderCancellation> cancelProductOrders =
+        productOrderFlux
+            .collectList()
+            .flatMapMany(
+                productOrders -> {
+                  LOG.info(
+                      "Cancelling {} productOrders for order {}",
+                      productOrders.size(),
+                      orderEntity.getId());
+
+                  List<ProductOrderCancellation> productOrderCancellations =
+                      productOrders.stream()
+                          .map(
+                              productOrder -> new ProductOrderCancellation(null, productOrder.id()))
+                          .toList();
+
+                  return inventoryClient.createProductOrderCancellations(productOrderCancellations);
+                });
 
     return Flux.zip(productOrderFlux, deliveryMono)
         .flatMap(tuple2 -> updateDeliveryId(orderEntity, tuple2.getT2()))
@@ -89,7 +109,8 @@ public class OrderServiceImpl implements OrderService {
             DeliveryClientException.class,
             throwable -> {
               LOG.error("Failed to create delivery");
-              return Mono.error(new IllegalStateException("Unable to create delivery"));
+              return cancelProductOrders.flatMap(
+                  x -> Mono.error(new IllegalStateException("Unable to create delivery")));
             })
         .single();
   }
