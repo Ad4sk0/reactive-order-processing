@@ -3,11 +3,13 @@ package com.example.order.client;
 import com.example.models.Delivery;
 import com.example.models.DeliveryCancellation;
 import com.example.models.DeliveryPossibility;
+import com.example.order.client.filter.DeliveryClientFilter;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.client.annotation.Client;
 import reactor.core.publisher.Mono;
 
 @Client(id = "delivery")
+@DeliveryClientFilter
 public interface DeliveryClient {
 
   @Get("/delivery-possibility")

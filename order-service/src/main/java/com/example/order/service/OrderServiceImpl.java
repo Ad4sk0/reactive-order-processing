@@ -3,6 +3,7 @@ package com.example.order.service;
 import com.example.models.*;
 import com.example.order.client.DeliveryClient;
 import com.example.order.client.InventoryClient;
+import com.example.order.client.exception.DeliveryClientException;
 import com.example.order.client.exception.InventoryClientException;
 import com.example.order.entity.OrderEntity;
 import com.example.order.mapper.OrderMapper;
@@ -83,6 +84,12 @@ public class OrderServiceImpl implements OrderService {
               LOG.error("Failed to create product order");
               return cancelDeliveryMono.flatMap(
                   x -> Mono.error(new IllegalStateException("Unable to create product order")));
+            })
+        .onErrorResume(
+            DeliveryClientException.class,
+            throwable -> {
+              LOG.error("Failed to create delivery");
+              return Mono.error(new IllegalStateException("Unable to create delivery"));
             })
         .single();
   }
