@@ -85,7 +85,6 @@ public class ProductServiceImpl implements ProductService {
             })
         .map(ProductMapper::toEntity)
         .collectList()
-        .log()
         .flatMapMany(productRepository::updateAll)
         .map(ProductMapper::toDTO);
   }

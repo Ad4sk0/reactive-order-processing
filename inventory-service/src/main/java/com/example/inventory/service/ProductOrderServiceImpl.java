@@ -1,6 +1,10 @@
 package com.example.inventory.service;
 
+import com.example.inventory.entity.ProductOrderCancellationEntity;
+import com.example.inventory.entity.ProductOrderEntity;
+import com.example.inventory.mapper.ProductOrderCancellationMapper;
 import com.example.inventory.mapper.ProductOrderMapper;
+import com.example.inventory.repository.ProductCancellationRepository;
 import com.example.inventory.repository.ProductOrderRepository;
 import com.example.models.*;
 import io.micronaut.transaction.annotation.Transactional;
@@ -20,12 +24,16 @@ import reactor.core.publisher.Mono;
 public class ProductOrderServiceImpl implements ProductOrderService {
   private static final Logger LOG = LoggerFactory.getLogger(ProductOrderServiceImpl.class);
   private final ProductOrderRepository productOrderRepository;
+  private final ProductCancellationRepository productCancellationRepository;
   private final ProductService productService;
 
   public ProductOrderServiceImpl(
-      ProductOrderRepository productOrderRepository, ProductService productService) {
+      ProductOrderRepository productOrderRepository,
+      ProductCancellationRepository productCancellationRepository,
+      ProductService productService) {
     this.productOrderRepository = productOrderRepository;
     this.productService = productService;
+    this.productCancellationRepository = productCancellationRepository;
   }
 
   @Override
@@ -57,7 +65,63 @@ public class ProductOrderServiceImpl implements ProductOrderService {
     for (ProductOrderCancellation cancellation : cancellations) {
       LOG.info("Cancelling product order with id {}", cancellation.productOrderId());
     }
-    return Flux.fromIterable(cancellations);
+
+    List<ObjectId> productOrderIds =
+        cancellations.stream()
+            .map(ProductOrderCancellation::productOrderId)
+            .map(ObjectId::new)
+            .toList();
+
+    Flux<ProductOrderCancellationEntity> findExistigProductOrderCancellationsFlux =
+        productCancellationRepository
+            .findByproductOrderIds(productOrderIds)
+            .collectList()
+            .flatMapMany(
+                alreadyCancelledProducts -> {
+                  if (!alreadyCancelledProducts.isEmpty()) {
+                    return Flux.error(
+                        new ValidationException(
+                            formatProductsAlreadyCancelledMessage(alreadyCancelledProducts)));
+                  }
+                  return Flux.empty();
+                });
+
+    Flux<ProductOrder> findProductOrdersFlux =
+        productOrderRepository
+            .findByIds(productOrderIds)
+            .collectList()
+            .flatMapMany(
+                existingProductOrders -> {
+                  if (existingProductOrders.size() != productOrderIds.size()) {
+                    List<ObjectId> notExistingIds = new ArrayList<>(productOrderIds);
+                    notExistingIds.removeAll(
+                        existingProductOrders.stream().map(ProductOrderEntity::_id).toList());
+                    return Flux.error(
+                        new ValidationException(
+                            String.format(
+                                "Unable to create product cancellations. Product orders with ids %s were not found",
+                                notExistingIds)));
+                  }
+                  return Flux.fromIterable(existingProductOrders);
+                })
+            .map(ProductOrderMapper::toDTO);
+
+    return findExistigProductOrderCancellationsFlux
+        .collectList()
+        .flatMapMany(ignored -> findProductOrdersFlux)
+        .collectList()
+        .flatMapMany(
+            productOrdersToCancel -> {
+              Flux<Product> findProductsToUpdateFlux =
+                  findProductsForAllProductOrders(productOrdersToCancel);
+              return findProductsToUpdateFlux
+                  .collectList()
+                  .flatMapMany(
+                      productsToUpdate ->
+                          updateProductStatuses(productsToUpdate, productOrdersToCancel, false));
+            })
+        .collectList()
+        .flatMapMany(updatedProducts -> persistProductCancellations(cancellations));
   }
 
   @Override
@@ -109,13 +173,13 @@ public class ProductOrderServiceImpl implements ProductOrderService {
   @Transactional
   Flux<ProductOrder> processProductOrders(
       List<Product> products, List<ProductOrder> productOrders) {
-    Flux<Product> updateProductStatusesFlux = updateProductStatuses(products, productOrders);
+    Flux<Product> updateProductStatusesFlux = updateProductStatuses(products, productOrders, true);
     Flux<ProductOrder> persistProductOrdersFlux = persist(productOrders);
     return Flux.zip(updateProductStatusesFlux, persistProductOrdersFlux, (product, order) -> order);
   }
 
   private Flux<Product> updateProductStatuses(
-      List<Product> products, List<ProductOrder> productOrders) {
+      List<Product> products, List<ProductOrder> productOrders, boolean decreaseQuantity) {
     Map<String, Product> productIdToProductMap =
         products.stream().collect(Collectors.toMap(Product::id, product -> product));
 
@@ -126,8 +190,11 @@ public class ProductOrderServiceImpl implements ProductOrderService {
             "Products list does not contain product order with id " + productOrder.productId());
       }
       Product product = productIdToProductMap.get(productOrder.productId());
-      ProductStatus updatedProductStatus =
-          new ProductStatus(product.status().quantity() - productOrder.quantity());
+      int updatedQuantity =
+          decreaseQuantity
+              ? product.status().quantity() - productOrder.quantity()
+              : product.status().quantity() + productOrder.quantity();
+      ProductStatus updatedProductStatus = new ProductStatus(updatedQuantity);
       updatedProducts.add(product.withStatus(updatedProductStatus));
     }
     return productService.updateAll(updatedProducts);
@@ -142,8 +209,22 @@ public class ProductOrderServiceImpl implements ProductOrderService {
         .map(ProductOrderMapper::toDTO);
   }
 
-  private Flux<Product> findProductsForAllProductOrders(List<ProductOrder> products) {
-    List<String> productIds = products.stream().map(ProductOrder::productId).toList();
+  private Flux<ProductOrderCancellation> persistProductCancellations(
+      List<ProductOrderCancellation> productOrderCancellations) {
+    if (productOrderCancellations.stream().anyMatch(productOrder -> productOrder.id() != null)) {
+      throw new UnsupportedOperationException(
+          "Update of product order cancellations is not supported");
+    }
+    return productCancellationRepository
+        .saveAll(
+            productOrderCancellations.stream()
+                .map(ProductOrderCancellationMapper::toEntity)
+                .toList())
+        .map(ProductOrderCancellationMapper::toDTO);
+  }
+
+  private Flux<Product> findProductsForAllProductOrders(List<ProductOrder> productOrders) {
+    List<String> productIds = productOrders.stream().map(ProductOrder::productId).toList();
     return productService.findByIds(productIds);
   }
 
@@ -198,5 +279,22 @@ public class ProductOrderServiceImpl implements ProductOrderService {
       case SOME_PRODUCTS_DO_NOT_EXIST -> "Some of the ordered products do not exist";
       case NOT_ENOUGH_QUANTITY -> "Some of the ordered products do not have enough quantity";
     };
+  }
+
+  private static String formatProductsAlreadyCancelledMessage(
+      List<ProductOrderCancellationEntity> alreadyCancelledProducts) {
+    List<String> cancelledIds =
+        alreadyCancelledProducts.stream()
+            .map(ProductOrderCancellationEntity::productOrderId)
+            .map(ObjectId::toString)
+            .toList();
+    if (alreadyCancelledProducts.isEmpty()) {
+      throw new UnsupportedOperationException("Unable to format message for empty list");
+    } else if (alreadyCancelledProducts.size() == 1) {
+      return String.format(
+          "Product order with id %s is already cancelled ", cancelledIds.getFirst());
+    } else {
+      return String.format("Products orders with ids %s are already cancelled ", cancelledIds);
+    }
   }
 }

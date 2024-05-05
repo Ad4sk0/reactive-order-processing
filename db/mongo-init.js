@@ -7,6 +7,8 @@ const deliveryDb = db.getSiblingDB(deliveryDbName);
 
 inventoryDb.createCollection("product_entity");
 inventoryDb.product_entity.createIndex( { name: 1 }, { unique: true } )
+inventoryDb.createCollection("product_order_cancellation_entity");
+inventoryDb.product_order_cancellation_entity.createIndex( { productOrderId: 1 }, { unique: true } )
 
 deliveryDb.createCollection("vehicle_entity");
 deliveryDb.vehicle_entity.insertMany([
