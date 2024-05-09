@@ -89,8 +89,7 @@ public class OrderServiceImpl implements OrderService {
 
                   List<ProductOrderCancellation> productOrderCancellations =
                       productOrders.stream()
-                          .map(
-                              productOrder -> new ProductOrderCancellation(null, productOrder.id()))
+                          .map(productOrder -> new ProductOrderCancellation(productOrder.id()))
                           .toList();
 
                   return inventoryClient.createProductOrderCancellations(productOrderCancellations);

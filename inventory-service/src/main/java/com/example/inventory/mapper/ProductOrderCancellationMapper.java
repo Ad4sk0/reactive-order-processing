@@ -14,11 +14,13 @@ public class ProductOrderCancellationMapper {
     if (productOrderCancellation == null) {
       return null;
     }
-    return new ProductOrderCancellationEntity(
-        Optional.ofNullable(productOrderCancellation.id()).map(ObjectId::new).orElse(null),
-        Optional.ofNullable(productOrderCancellation.productOrderId())
-            .map(ObjectId::new)
-            .orElse(null));
+
+    return ProductOrderCancellationEntity.builder()
+        .productOrderId(
+            Optional.ofNullable(productOrderCancellation.productOrderId())
+                .map(ObjectId::new)
+                .orElse(null))
+        .build();
   }
 
   public static ProductOrderCancellation toDTO(
@@ -27,7 +29,8 @@ public class ProductOrderCancellationMapper {
       return null;
     }
     return new ProductOrderCancellation(
-        productOrderCancellationEntity._id().toString(),
-        productOrderCancellationEntity._id().toString());
+        productOrderCancellationEntity.getId().toString(),
+        productOrderCancellationEntity.getProductOrderId().toString(),
+        productOrderCancellationEntity.getAuditData());
   }
 }

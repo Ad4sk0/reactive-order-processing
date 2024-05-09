@@ -162,7 +162,8 @@ public class ProductOrderServiceImpl implements ProductOrderService {
     return isProductOrderPossibleMono.flatMapMany(
         orderPossibility -> {
           if (!orderPossibility.isPossible()) {
-            throw new ValidationException(errorMessageProvider.apply(orderPossibility.details()));
+            return Mono.error(
+                new ValidationException(errorMessageProvider.apply(orderPossibility.details())));
           }
           return findProductsForAllProductOrders(productOrders)
               .collectList()
@@ -285,7 +286,7 @@ public class ProductOrderServiceImpl implements ProductOrderService {
       List<ProductOrderCancellationEntity> alreadyCancelledProducts) {
     List<String> cancelledIds =
         alreadyCancelledProducts.stream()
-            .map(ProductOrderCancellationEntity::productOrderId)
+            .map(ProductOrderCancellationEntity::getProductOrderId)
             .map(ObjectId::toString)
             .toList();
     if (alreadyCancelledProducts.isEmpty()) {

@@ -9,4 +9,10 @@ public record ProductOrderCancellation(
     String id,
     @NotBlank
         @Size(min = 24, max = 24, message = "productOrderId must be exactly 24 characters long")
-        String productOrderId) {}
+        String productOrderId,
+    AuditData auditData) {
+
+  public ProductOrderCancellation(String productOrderId) {
+    this(null, productOrderId, null);
+  }
+}
