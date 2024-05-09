@@ -43,23 +43,19 @@ class OrderServiceImplTest {
   @Test
   void shouldCreateOrder() {
     List<OrderItem> orderItems = List.of(new OrderItem("1", 1), new OrderItem("2", 2));
-    Order order =
-        Order.builder()
-            .items(orderItems)
-            .deliveryInfo(new DeliveryInfo("TestStreet", "TestCity"))
-            .build();
+    Order order = new Order(orderItems, new DeliveryInfo("TestStreet", "TestCity"));
 
     StepVerifier.create(orderService.save(order))
         .assertNext(
             savedOrder -> {
-              assertNotNull(savedOrder.getId());
-              assertEquals("TestStreet", savedOrder.getDeliveryInfo().street());
-              assertEquals("TestCity", savedOrder.getDeliveryInfo().city());
-              assertEquals(2, savedOrder.getItems().size());
-              assertEquals("1", savedOrder.getItems().getFirst().productId());
-              assertEquals(1, savedOrder.getItems().getFirst().quantity());
-              assertEquals("2", savedOrder.getItems().get(1).productId());
-              assertEquals(2, savedOrder.getItems().get(1).quantity());
+              assertNotNull(savedOrder.id());
+              assertEquals("TestStreet", savedOrder.deliveryInfo().street());
+              assertEquals("TestCity", savedOrder.deliveryInfo().city());
+              assertEquals(2, savedOrder.items().size());
+              assertEquals("1", savedOrder.items().get(0).productId());
+              assertEquals(1, savedOrder.items().get(0).quantity());
+              assertEquals("2", savedOrder.items().get(1).productId());
+              assertEquals(2, savedOrder.items().get(1).quantity());
             })
         .verifyComplete();
   }
@@ -69,11 +65,7 @@ class OrderServiceImplTest {
     when(deliveryClient.checkDeliveryPossibility(any(), any()))
         .thenReturn(Mono.just(new DeliveryPossibility(false, null, null, null)));
     List<OrderItem> orderItems = List.of(new OrderItem("1", 1), new OrderItem("2", 2));
-    Order order =
-        Order.builder()
-            .items(orderItems)
-            .deliveryInfo(new DeliveryInfo("TestStreet", "TestCity"))
-            .build();
+    Order order = new Order(orderItems, new DeliveryInfo("TestStreet", "TestCity"));
 
     StepVerifier.create(orderService.save(order)).expectError(ValidationException.class).verify();
   }
@@ -83,11 +75,7 @@ class OrderServiceImplTest {
     when(inventoryClient.getProductOrderPossibility(any()))
         .thenReturn(Mono.just(new ProductOrderPossibility(false, null)));
     List<OrderItem> orderItems = List.of(new OrderItem("1", 1), new OrderItem("2", 2));
-    Order order =
-        Order.builder()
-            .items(orderItems)
-            .deliveryInfo(new DeliveryInfo("TestStreet", "TestCity"))
-            .build();
+    Order order = new Order(orderItems, new DeliveryInfo("TestStreet", "TestCity"));
 
     StepVerifier.create(orderService.save(order)).expectError(ValidationException.class).verify();
   }
@@ -106,6 +94,12 @@ class OrderServiceImplTest {
                       .deliveryInfo(orderEntity.getDeliveryInfo())
                       .build());
             });
+    when(orderRepositoryMock.update(any()))
+            .thenAnswer(
+                    invocation -> {
+                      OrderEntity orderEntity = invocation.getArgument(0);
+                      return Mono.just(orderEntity);
+                    });
     return orderRepositoryMock;
   }
 

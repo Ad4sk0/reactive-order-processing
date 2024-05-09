@@ -5,19 +5,12 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
-import lombok.Builder;
-import lombok.Data;
 
-@Builder
-@Data
 @Serdeable
-public class Order {
+public record Order (String id, @NotEmpty @Valid List<OrderItem> items, @NotNull @Valid DeliveryInfo deliveryInfo, String deliveryId, AuditData auditData) {
 
-  private String id;
+  public Order(List<OrderItem> items, DeliveryInfo deliveryInfo) {
+    this(null, items, deliveryInfo, null, null);
+  }
 
-  @NotEmpty @Valid private List<OrderItem> items;
-
-  @NotNull @Valid private DeliveryInfo deliveryInfo;
-
-  private String deliveryId;
 }

@@ -9,25 +9,31 @@ public class OrderMapper {
   private OrderMapper() {}
 
   public static OrderEntity toEntity(Order order) {
+    if (order == null) {
+      return null;
+    }
+
     return OrderEntity.builder()
-        .id(null)
         .orderItems(
-            Optional.ofNullable(order.getItems())
+            Optional.ofNullable(order.items())
                 .map(orderItems -> orderItems.stream().map(OrderItemMapper::toEntity).toList())
                 .orElse(null))
-        .deliveryInfo(DeliveryInfoMapper.toEntity(order.getDeliveryInfo()))
+        .deliveryInfo(DeliveryInfoMapper.toEntity(order.deliveryInfo()))
         .build();
   }
 
   public static Order toDTO(OrderEntity orderEntity) {
-    return Order.builder()
-        .id(orderEntity.getId().toString())
-        .items(
-            Optional.ofNullable(orderEntity.getOrderItems())
-                .map(orderItems -> orderItems.stream().map(OrderItemMapper::toDTO).toList())
-                .orElse(null))
-        .deliveryInfo(DeliveryInfoMapper.toDTO(orderEntity.getDeliveryInfo()))
-        .deliveryId(orderEntity.getDeliveryId().toString())
-        .build();
+    if (orderEntity == null) {
+      return null;
+    }
+
+    return new Order(
+        orderEntity.getId().toString(),
+        Optional.ofNullable(orderEntity.getOrderItems())
+            .map(orderItems -> orderItems.stream().map(OrderItemMapper::toDTO).toList())
+            .orElse(null),
+        DeliveryInfoMapper.toDTO(orderEntity.getDeliveryInfo()),
+        orderEntity.getDeliveryId().toString(),
+        orderEntity.getAuditData());
   }
 }

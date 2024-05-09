@@ -1,4 +1,4 @@
-package com.example.inventory.entity;
+package com.example.common.entity;
 
 import com.example.models.AuditData;
 import io.micronaut.data.annotation.GeneratedValue;

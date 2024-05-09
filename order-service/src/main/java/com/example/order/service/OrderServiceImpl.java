@@ -116,7 +116,7 @@ public class OrderServiceImpl implements OrderService {
 
   private Mono<OrderEntity> updateDeliveryId(OrderEntity orderEntity, Delivery delivery) {
     orderEntity.setDeliveryId(new ObjectId(delivery.id()));
-    return orderRepository.save(orderEntity);
+    return orderRepository.update(orderEntity);
   }
 
   private Mono<ProductOrderPossibility> checkIfProductsAreAvailable(
@@ -141,7 +141,7 @@ public class OrderServiceImpl implements OrderService {
 
   private Mono<DeliveryPossibility> checkIfDeliveryIsPossible(Order order) {
     return deliveryClient
-        .checkDeliveryPossibility(order.getDeliveryInfo().city(), order.getDeliveryInfo().street())
+        .checkDeliveryPossibility(order.deliveryInfo().city(), order.deliveryInfo().street())
         .doOnError(
             throwable -> {
               LOG.info("Error checking delivery possibility: {}", throwable.getMessage());
@@ -163,13 +163,13 @@ public class OrderServiceImpl implements OrderService {
   }
 
   private List<ProductOrder> createProductOrdersDTOs(Order order) {
-    return order.getItems().stream()
+    return order.items().stream()
         .map(orderItem -> new ProductOrder(orderItem.productId(), orderItem.quantity()))
         .toList();
   }
 
   private Delivery createNewDeliveryDto(Order order, OrderEntity orderEntity) {
     return new Delivery(
-        null, orderEntity.getId().toString(), order.getDeliveryInfo(), null, null, null, null);
+        null, orderEntity.getId().toString(), order.deliveryInfo(), null, null, null, null);
   }
 }

@@ -1,5 +1,6 @@
 package com.example.inventory.entity;
 
+import com.example.common.entity.BaseEntity;
 import com.example.models.ProductType;
 import io.micronaut.data.annotation.MappedEntity;
 import jakarta.validation.Valid;
