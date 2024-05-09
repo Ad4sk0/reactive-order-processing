@@ -57,7 +57,7 @@ class ProductControllerTestIT extends AbstractContainersTest {
         .when()
         .post(ENDPOINT)
         .then()
-        .statusCode(500);
+        .statusCode(400);
   }
 
   @Test

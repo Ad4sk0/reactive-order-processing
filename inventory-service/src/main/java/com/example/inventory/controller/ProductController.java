@@ -21,11 +21,12 @@ public class ProductController {
   }
 
   @Get
-  Flux<Product> list(@Nullable @QueryValue List<String> ids) {
+  @SingleResult
+  Mono<List<Product>> list(@Nullable @QueryValue List<String> ids) {
     if (ids != null && !ids.isEmpty()) {
-      return productService.findByIds(ids);
+      return productService.findByIds(ids).collectList();
     }
-    return productService.findAll();
+    return productService.findAll().collectList();
   }
 
   @Post

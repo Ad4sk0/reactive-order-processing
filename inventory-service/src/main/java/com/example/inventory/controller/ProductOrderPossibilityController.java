@@ -3,6 +3,7 @@ package com.example.inventory.controller;
 import com.example.inventory.service.ProductOrderService;
 import com.example.models.ProductOrder;
 import com.example.models.ProductOrderPossibility;
+import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.http.annotation.*;
 import java.util.List;
 import reactor.core.publisher.Mono;
@@ -17,6 +18,7 @@ public class ProductOrderPossibilityController {
   }
 
   @Post
+  @SingleResult
   Mono<ProductOrderPossibility> isProductOrderPossible(@Body List<ProductOrder> products) {
     return productOrderService.isProductOrderPossible(products);
   }

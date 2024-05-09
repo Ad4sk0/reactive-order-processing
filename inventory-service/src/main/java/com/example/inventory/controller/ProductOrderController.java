@@ -20,14 +20,16 @@ public class ProductOrderController {
   }
 
   @Get
-  Flux<ProductOrder> list() {
-    return productOrderService.findAll();
+  @SingleResult
+  Mono<List<ProductOrder>> list() {
+    return productOrderService.findAll().collectList();
   }
 
   @Post
   @Status(HttpStatus.CREATED)
-  Flux<ProductOrder> save(@Valid @Body @NotEmpty List<ProductOrder> productOrders) {
-    return productOrderService.saveAll(productOrders);
+  @SingleResult
+  Mono<List<ProductOrder>> save(@Valid @Body @NotEmpty List<ProductOrder> productOrders) {
+    return productOrderService.saveAll(productOrders).collectList();
   }
 
   @Get("/{id}")

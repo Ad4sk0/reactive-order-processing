@@ -59,7 +59,7 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
         .when()
         .post(ENDPOINT)
         .then()
-        .statusCode(500);
+        .statusCode(400);
   }
 
   @Test
@@ -75,7 +75,7 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
         .when()
         .post(ENDPOINT)
         .then()
-        .statusCode(500);
+        .statusCode(400);
   }
 
   @Test
@@ -166,7 +166,7 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
         .when()
         .post(ENDPOINT)
         .then()
-        .statusCode(500);
+        .statusCode(400);
   }
 
   @Test
@@ -189,7 +189,7 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
         .when()
         .post(ENDPOINT)
         .then()
-        .statusCode(500);
+        .statusCode(400);
   }
 
   private Product createProduct(RequestSpecification spec, Product product) {
