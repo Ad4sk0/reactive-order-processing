@@ -20,7 +20,7 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
   void shouldCreateProductOrder(RequestSpecification spec) {
     Product product = new Product("test-product-order-1", ProductType.PIZZA, new ProductStatus(3));
     Product createdProduct = createProduct(spec, product);
-    List<ProductOrder> productOrders = List.of(new ProductOrder(null, createdProduct.id(), 1));
+    List<ProductOrder> productOrders = List.of(new ProductOrder(createdProduct.id(), 1));
 
     spec.given()
         .contentType("application/json")
@@ -36,7 +36,7 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
 
   @Test
   void shouldNotCreateProductOrderIfProductIdNotSpecified(RequestSpecification spec) {
-    List<ProductOrder> productOrders = List.of(new ProductOrder(null, null, 1));
+    List<ProductOrder> productOrders = List.of(new ProductOrder(null, 1));
 
     spec.given()
         .contentType("application/json")
@@ -50,7 +50,7 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
   @Test
   void shouldNotCreateProductOrderIfProductIdDoesNotExist(RequestSpecification spec) {
     List<ProductOrder> productOrders =
-        List.of(new ProductOrder(null, "323456789123456789123456", 1));
+        List.of(new ProductOrder("323456789123456789123456", 1));
 
     spec.given()
         .contentType("application/json")
@@ -65,7 +65,7 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
   void shouldNotCreateProductOrderIfProductQuantityIsToSmall(RequestSpecification spec) {
     Product product = new Product("test-product-order-2", ProductType.PIZZA, new ProductStatus(3));
     Product createdProduct = createProduct(spec, product);
-    List<ProductOrder> productOrders = List.of(new ProductOrder(null, createdProduct.id(), 4));
+    List<ProductOrder> productOrders = List.of(new ProductOrder(createdProduct.id(), 4));
 
     spec.given()
         .contentType("application/json")
@@ -80,7 +80,7 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
   void shouldCreateProductOrderAndReduceProductQuantity(RequestSpecification spec) {
     Product product = new Product("test-product-order-3", ProductType.PIZZA, new ProductStatus(3));
     Product createdProduct = createProduct(spec, product);
-    List<ProductOrder> productOrders = List.of(new ProductOrder(null, createdProduct.id(), 1));
+    List<ProductOrder> productOrders = List.of(new ProductOrder(createdProduct.id(), 1));
 
     spec.given()
         .contentType("application/json")
@@ -109,8 +109,8 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
     Product createdProduct2 = createProduct(spec, product2);
     List<ProductOrder> productOrders =
         List.of(
-            new ProductOrder(null, createdProduct1.id(), 1),
-            new ProductOrder(null, createdProduct2.id(), 1));
+            new ProductOrder(createdProduct1.id(), 1),
+            new ProductOrder(createdProduct2.id(), 1));
 
     spec.given()
         .contentType("application/json")
@@ -151,8 +151,8 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
     Product createdProduct = createProduct(spec, product);
     List<ProductOrder> productOrders =
         List.of(
-            new ProductOrder(null, createdProduct.id(), 1),
-            new ProductOrder(null, createdProduct.id(), 1));
+            new ProductOrder(createdProduct.id(), 1),
+            new ProductOrder(createdProduct.id(), 1));
 
     spec.given()
         .contentType("application/json")
@@ -172,8 +172,8 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
     Product createdProduct2 = createProduct(spec, product2);
     List<ProductOrder> productOrders =
         List.of(
-            new ProductOrder(null, createdProduct1.id(), 1),
-            new ProductOrder(null, createdProduct2.id(), 4));
+            new ProductOrder(createdProduct1.id(), 1),
+            new ProductOrder(createdProduct2.id(), 4));
 
     spec.given()
         .contentType("application/json")

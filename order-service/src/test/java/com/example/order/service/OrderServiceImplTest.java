@@ -114,7 +114,7 @@ class OrderServiceImplTest {
     when(inventoryClientMock.getProductOrderPossibility(any()))
         .thenReturn(Mono.just(new ProductOrderPossibility(true, null)));
     when(inventoryClientMock.createProductOrder(any()))
-        .thenReturn(Flux.just(new ProductOrder(createObjectId("1"), createObjectId("1"), 1)));
+        .thenReturn(Flux.just(new ProductOrder(createObjectId("1"), createObjectId("1"), 1, null)));
     return inventoryClientMock;
   }
 

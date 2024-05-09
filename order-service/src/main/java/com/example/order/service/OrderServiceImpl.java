@@ -165,7 +165,7 @@ public class OrderServiceImpl implements OrderService {
 
   private List<ProductOrder> createProductOrdersDTOs(Order order) {
     return order.getItems().stream()
-        .map(orderItem -> new ProductOrder(null, orderItem.productId(), orderItem.quantity()))
+        .map(orderItem -> new ProductOrder(orderItem.productId(), orderItem.quantity()))
         .toList();
   }
 

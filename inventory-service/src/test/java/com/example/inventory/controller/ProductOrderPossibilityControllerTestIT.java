@@ -22,7 +22,7 @@ class ProductOrderPossibilityControllerTestIT extends AbstractContainersTest {
     Product product =
         new Product("test-product-order-possibility-1", ProductType.PIZZA, new ProductStatus(3));
     Product createdProduct = createProduct(spec, product);
-    List<ProductOrder> productOrders = List.of(new ProductOrder(null, createdProduct.id(), 1));
+    List<ProductOrder> productOrders = List.of(new ProductOrder(createdProduct.id(), 1));
 
     spec.given()
         .contentType("application/json")
@@ -36,8 +36,7 @@ class ProductOrderPossibilityControllerTestIT extends AbstractContainersTest {
 
   @Test
   void shouldProductOrderBeNotPossibleIfIdDoesNotExist(RequestSpecification spec) {
-    List<ProductOrder> productOrders =
-        List.of(new ProductOrder(null, TestsUtils.createObjectId("1"), 1));
+    List<ProductOrder> productOrders = List.of(new ProductOrder(TestsUtils.createObjectId("1"), 1));
 
     spec.given()
         .contentType("application/json")
@@ -54,7 +53,7 @@ class ProductOrderPossibilityControllerTestIT extends AbstractContainersTest {
     Product product =
         new Product("test-product-order-possibility-2", ProductType.PIZZA, new ProductStatus(3));
     Product createdProduct = createProduct(spec, product);
-    List<ProductOrder> productOrders = List.of(new ProductOrder(null, createdProduct.id(), 4));
+    List<ProductOrder> productOrders = List.of(new ProductOrder(createdProduct.id(), 4));
 
     spec.given()
         .contentType("application/json")
@@ -70,8 +69,8 @@ class ProductOrderPossibilityControllerTestIT extends AbstractContainersTest {
   void shouldProductOrderBeNotPossibleIfRequestContainsDuplicatedIds(RequestSpecification spec) {
     List<ProductOrder> productOrders =
         List.of(
-            new ProductOrder(null, TestsUtils.createObjectId("1"), 1),
-            new ProductOrder(null, TestsUtils.createObjectId("1"), 1));
+            new ProductOrder(TestsUtils.createObjectId("1"), 1),
+            new ProductOrder(TestsUtils.createObjectId("1"), 1));
 
     spec.given()
         .contentType("application/json")

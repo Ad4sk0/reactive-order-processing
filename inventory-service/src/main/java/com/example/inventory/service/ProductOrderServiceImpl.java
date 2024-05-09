@@ -95,7 +95,7 @@ public class ProductOrderServiceImpl implements ProductOrderService {
                   if (existingProductOrders.size() != productOrderIds.size()) {
                     List<ObjectId> notExistingIds = new ArrayList<>(productOrderIds);
                     notExistingIds.removeAll(
-                        existingProductOrders.stream().map(ProductOrderEntity::_id).toList());
+                        existingProductOrders.stream().map(ProductOrderEntity::getId).toList());
                     return Flux.error(
                         new ValidationException(
                             String.format(

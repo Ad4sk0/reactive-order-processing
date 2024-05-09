@@ -1,12 +1,19 @@
 package com.example.inventory.entity;
 
-import io.micronaut.data.annotation.GeneratedValue;
-import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
-import org.bson.types.ObjectId;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 @MappedEntity
-public record ProductOrderEntity(
-        @Id @GeneratedValue ObjectId _id, @NotBlank String productId, @Positive int quantity) {}
+@SuperBuilder
+@Getter
+@Setter
+@NoArgsConstructor
+public class ProductOrderEntity extends BaseEntity {
+  private @NotBlank String productId;
+  private @Positive int quantity;
+}
