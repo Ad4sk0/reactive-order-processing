@@ -9,6 +9,8 @@ import jakarta.validation.Valid;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @Controller("/orders")
 public class OrdersController {
 
@@ -19,8 +21,9 @@ public class OrdersController {
   }
 
   @Get
-  Flux<Order> list() {
-    return orderService.findAll();
+  @SingleResult
+  Mono<List<Order>> list() {
+    return orderService.findAll().collectList();
   }
 
   @Post

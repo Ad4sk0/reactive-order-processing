@@ -6,7 +6,7 @@ import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.*;
 import jakarta.validation.Valid;
-import reactor.core.publisher.Flux;
+import java.util.List;
 import reactor.core.publisher.Mono;
 
 @Controller("/deliveries")
@@ -19,8 +19,9 @@ public class DeliveryController {
   }
 
   @Get
-  Flux<Delivery> list() {
-    return deliveryService.findAll();
+  @SingleResult
+  Mono<List<Delivery>> list() {
+    return deliveryService.findAll().collectList();
   }
 
   @Post

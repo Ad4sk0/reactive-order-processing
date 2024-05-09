@@ -16,6 +16,7 @@
         <module>order-service</module>
         <module>tests</module>
         <module>infrastructure</module>
+        <module>common</module>
     </modules>
 
     <parent>

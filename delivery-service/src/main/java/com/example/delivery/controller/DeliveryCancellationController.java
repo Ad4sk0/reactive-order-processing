@@ -2,6 +2,7 @@ package com.example.delivery.controller;
 
 import com.example.delivery.service.DeliveryService;
 import com.example.models.*;
+import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.*;
 import jakarta.validation.Valid;
@@ -17,6 +18,7 @@ public class DeliveryCancellationController {
 
   @Post
   @Status(HttpStatus.CREATED)
+  @SingleResult
   Mono<DeliveryCancellation> save(@Valid @Body DeliveryCancellation deliveryCancellation) {
     return deliveryService.cancelDelivery(deliveryCancellation);
   }
