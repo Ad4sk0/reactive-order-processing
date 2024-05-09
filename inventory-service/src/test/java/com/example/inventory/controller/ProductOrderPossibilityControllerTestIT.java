@@ -20,8 +20,7 @@ class ProductOrderPossibilityControllerTestIT extends AbstractContainersTest {
   @Test
   void shouldProductOrderBePossible(RequestSpecification spec) {
     Product product =
-        new Product(
-            null, "test-product-order-possibility-1", ProductType.PIZZA, new ProductStatus(3));
+        new Product("test-product-order-possibility-1", ProductType.PIZZA, new ProductStatus(3));
     Product createdProduct = createProduct(spec, product);
     List<ProductOrder> productOrders = List.of(new ProductOrder(null, createdProduct.id(), 1));
 
@@ -53,8 +52,7 @@ class ProductOrderPossibilityControllerTestIT extends AbstractContainersTest {
   @Test
   void shouldProductOrderBeNotPossibleIfProductHasNotEnoughQuantity(RequestSpecification spec) {
     Product product =
-        new Product(
-            null, "test-product-order-possibility-2", ProductType.PIZZA, new ProductStatus(3));
+        new Product("test-product-order-possibility-2", ProductType.PIZZA, new ProductStatus(3));
     Product createdProduct = createProduct(spec, product);
     List<ProductOrder> productOrders = List.of(new ProductOrder(null, createdProduct.id(), 4));
 

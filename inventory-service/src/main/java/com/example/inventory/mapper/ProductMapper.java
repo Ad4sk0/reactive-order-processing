@@ -2,8 +2,6 @@ package com.example.inventory.mapper;
 
 import com.example.inventory.entity.ProductEntity;
 import com.example.models.Product;
-import java.util.Optional;
-import org.bson.types.ObjectId;
 
 public class ProductMapper {
 
@@ -13,11 +11,12 @@ public class ProductMapper {
     if (product == null) {
       return null;
     }
-    return new ProductEntity(
-        Optional.ofNullable(product.id()).map(ObjectId::new).orElse(null),
-        product.name(),
-        product.productType(),
-        ProductStatusMapper.toEntity(product.status()));
+
+    return ProductEntity.builder()
+        .name(product.name())
+        .productType(product.productType())
+        .status(ProductStatusMapper.toEntity(product.status()))
+        .build();
   }
 
   public static Product toDTO(ProductEntity productEntity) {
@@ -25,9 +24,10 @@ public class ProductMapper {
       return null;
     }
     return new Product(
-        productEntity._id().toString(),
-        productEntity.name(),
-        productEntity.productType(),
-        ProductStatusMapper.toDTO(productEntity.status()));
+        productEntity.getId().toString(),
+        productEntity.getName(),
+        productEntity.getProductType(),
+        ProductStatusMapper.toDTO(productEntity.getStatus()),
+        productEntity.getAuditData());
   }
 }

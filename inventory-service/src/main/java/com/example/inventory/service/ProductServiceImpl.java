@@ -3,6 +3,7 @@ package com.example.inventory.service;
 import com.example.inventory.entity.ProductEntity;
 import com.example.inventory.mapper.ProductMapper;
 import com.example.inventory.repository.ProductRepository;
+import com.example.inventory.service.logic.update.ProductUpdateLogic;
 import com.example.models.Product;
 import com.example.models.ProductStatus;
 import jakarta.inject.Singleton;
@@ -17,14 +18,38 @@ import reactor.core.publisher.Mono;
 public class ProductServiceImpl implements ProductService {
 
   private final ProductRepository productRepository;
+  private final ProductUpdateLogic productUpdateLogic;
 
-  public ProductServiceImpl(ProductRepository productRepository) {
+  public ProductServiceImpl(
+      ProductRepository productRepository, ProductUpdateLogic productUpdateLogic) {
     this.productRepository = productRepository;
+    this.productUpdateLogic = productUpdateLogic;
   }
 
   @Override
   public Flux<Product> findAll() {
     return productRepository.findAll().map(ProductMapper::toDTO);
+  }
+
+  @Override
+  public Mono<Product> findById(@NotNull String id) {
+    return productRepository.findById(new ObjectId(id)).map(ProductMapper::toDTO);
+  }
+
+  @Override
+  public Flux<Product> findByIds(List<String> ids) {
+    List<ObjectId> objectIds = ids.stream().map(ObjectId::new).toList();
+    return productRepository
+        .findByIds(objectIds)
+        .collectList()
+        .flatMapMany(
+            list -> {
+              if (list.size() != ids.size()) {
+                return Flux.error(new ValidationException("Unable to find some of the products"));
+              }
+              return Flux.fromIterable(list);
+            })
+        .map(ProductMapper::toDTO);
   }
 
   @Override
@@ -62,51 +87,10 @@ public class ProductServiceImpl implements ProductService {
   }
 
   private Mono<Product> updateProduct(Product product) {
-    return findById(product.id())
-        .switchIfEmpty(
-            Mono.error(
-                new ValidationException(
-                    String.format("Product with id %s does not exist", product.id()))))
-        .flatMap(exisitingProduct -> productRepository.update(ProductMapper.toEntity(product)))
-        .map(ProductMapper::toDTO);
+    return productUpdateLogic.updateProduct(product).map(ProductMapper::toDTO);
   }
 
   private Flux<Product> updateProducts(List<Product> products) {
-    return findByIds(products.stream().map(Product::id).toList())
-        .collectList()
-        .flatMapMany(
-            existingProducts -> {
-              if (existingProducts.size() != products.size()) {
-                return Flux.error(
-                    new ValidationException(
-                        "Unable to update products. Some of the products were not found"));
-              }
-              return Flux.fromIterable(products);
-            })
-        .map(ProductMapper::toEntity)
-        .collectList()
-        .flatMapMany(productRepository::updateAll)
-        .map(ProductMapper::toDTO);
-  }
-
-  @Override
-  public Mono<Product> findById(@NotNull String id) {
-    return productRepository.findById(new ObjectId(id)).map(ProductMapper::toDTO);
-  }
-
-  @Override
-  public Flux<Product> findByIds(List<String> ids) {
-    List<ObjectId> objectIds = ids.stream().map(ObjectId::new).toList();
-    return productRepository
-        .findByIds(objectIds)
-        .collectList()
-        .flatMapMany(
-            list -> {
-              if (list.size() != ids.size()) {
-                return Flux.error(new ValidationException("Unable to find some of the products"));
-              }
-              return Flux.fromIterable(list);
-            })
-        .map(ProductMapper::toDTO);
+    return productUpdateLogic.updateProducts(products).map(ProductMapper::toDTO);
   }
 }

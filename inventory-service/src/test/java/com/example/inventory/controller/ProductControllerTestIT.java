@@ -15,7 +15,7 @@ class ProductControllerTestIT extends AbstractContainersTest {
 
   @Test
   void shouldCreateDefaultProductStatusWhenNotSpecified(RequestSpecification spec) {
-    Product product = new Product(null, "test-product-1", ProductType.PIZZA, null);
+    Product product = new Product("test-product-1", ProductType.PIZZA, null);
     spec.given()
         .contentType("application/json")
         .body(product)
@@ -28,7 +28,7 @@ class ProductControllerTestIT extends AbstractContainersTest {
 
   @Test
   void shouldCreateProductStatusWhenSpecified(RequestSpecification spec) {
-    Product product = new Product(null, "test-product-2", ProductType.PIZZA, new ProductStatus(10));
+    Product product = new Product("test-product-2", ProductType.PIZZA, new ProductStatus(10));
     spec.given()
         .contentType("application/json")
         .body(product)
@@ -41,7 +41,7 @@ class ProductControllerTestIT extends AbstractContainersTest {
 
   @Test
   void shouldNotCreateProductWhenNameExists(RequestSpecification spec) {
-    Product product = new Product(null, "test-product-3", ProductType.PIZZA, null);
+    Product product = new Product("test-product-3", ProductType.PIZZA, null);
     spec.given()
         .contentType("application/json")
         .body(product)
@@ -50,7 +50,7 @@ class ProductControllerTestIT extends AbstractContainersTest {
         .then()
         .statusCode(201);
 
-    Product product2 = new Product(null, "test-product-3", ProductType.PIZZA, null);
+    Product product2 = new Product("test-product-3", ProductType.PIZZA, null);
     spec.given()
         .contentType("application/json")
         .body(product2)
@@ -62,7 +62,7 @@ class ProductControllerTestIT extends AbstractContainersTest {
 
   @Test
   void shouldNotCreateProductWhenNameIsEmpty(RequestSpecification spec) {
-    Product product = new Product(null, null, ProductType.PIZZA, null);
+    Product product = new Product(null, ProductType.PIZZA, null);
     spec.given()
         .contentType("application/json")
         .body(product)
@@ -74,7 +74,7 @@ class ProductControllerTestIT extends AbstractContainersTest {
 
   @Test
   void shouldNotCreateProductIfStatusQuantityIsNegative(RequestSpecification spec) {
-    Product product = new Product(null, "test-product-4", ProductType.PIZZA, new ProductStatus(-2));
+    Product product = new Product("test-product-4", ProductType.PIZZA, new ProductStatus(-2));
     spec.given()
         .contentType("application/json")
         .body(product)
@@ -86,7 +86,7 @@ class ProductControllerTestIT extends AbstractContainersTest {
 
   @Test
   void shouldUpdateProductIfStatusQuantityIsPositive(RequestSpecification spec) {
-    Product product = new Product(null, "test-product-4", ProductType.PIZZA, new ProductStatus(10));
+    Product product = new Product("test-product-4", ProductType.PIZZA, new ProductStatus(10));
     Product createdProduct =
         spec.given().contentType("application/json").body(product).post(ENDPOINT).as(Product.class);
 
@@ -104,7 +104,7 @@ class ProductControllerTestIT extends AbstractContainersTest {
 
   @Test
   void shouldNotUpdateProductIfStatusQuantityIsNegative(RequestSpecification spec) {
-    Product product = new Product(null, "test-product-5", ProductType.PIZZA, new ProductStatus(10));
+    Product product = new Product("test-product-5", ProductType.PIZZA, new ProductStatus(10));
     Product createdProduct =
         spec.given().contentType("application/json").body(product).post(ENDPOINT).as(Product.class);
 
@@ -121,7 +121,7 @@ class ProductControllerTestIT extends AbstractContainersTest {
 
   @Test
   void shouldCreateAndRetrieveProduct(RequestSpecification spec) {
-    Product product = new Product(null, "test-product-6", ProductType.PIZZA, null);
+    Product product = new Product("test-product-6", ProductType.PIZZA, null);
     Product createdProduct =
         spec.given().contentType("application/json").body(product).post(ENDPOINT).as(Product.class);
 
@@ -136,8 +136,8 @@ class ProductControllerTestIT extends AbstractContainersTest {
 
   @Test
   void shouldListProducts(RequestSpecification spec) {
-    Product product = new Product(null, "test-product-7", ProductType.PIZZA, null);
-    Product product2 = new Product(null, "test-product-8", ProductType.PIZZA, null);
+    Product product = new Product("test-product-7", ProductType.PIZZA, null);
+    Product product2 = new Product("test-product-8", ProductType.PIZZA, null);
     spec.given()
         .contentType("application/json")
         .body(product)

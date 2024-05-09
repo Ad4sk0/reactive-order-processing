@@ -18,8 +18,7 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
 
   @Test
   void shouldCreateProductOrder(RequestSpecification spec) {
-    Product product =
-        new Product(null, "test-product-order-1", ProductType.PIZZA, new ProductStatus(3));
+    Product product = new Product("test-product-order-1", ProductType.PIZZA, new ProductStatus(3));
     Product createdProduct = createProduct(spec, product);
     List<ProductOrder> productOrders = List.of(new ProductOrder(null, createdProduct.id(), 1));
 
@@ -64,8 +63,7 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
 
   @Test
   void shouldNotCreateProductOrderIfProductQuantityIsToSmall(RequestSpecification spec) {
-    Product product =
-        new Product(null, "test-product-order-2", ProductType.PIZZA, new ProductStatus(3));
+    Product product = new Product("test-product-order-2", ProductType.PIZZA, new ProductStatus(3));
     Product createdProduct = createProduct(spec, product);
     List<ProductOrder> productOrders = List.of(new ProductOrder(null, createdProduct.id(), 4));
 
@@ -80,8 +78,7 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
 
   @Test
   void shouldCreateProductOrderAndReduceProductQuantity(RequestSpecification spec) {
-    Product product =
-        new Product(null, "test-product-order-3", ProductType.PIZZA, new ProductStatus(3));
+    Product product = new Product("test-product-order-3", ProductType.PIZZA, new ProductStatus(3));
     Product createdProduct = createProduct(spec, product);
     List<ProductOrder> productOrders = List.of(new ProductOrder(null, createdProduct.id(), 1));
 
@@ -106,10 +103,8 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
 
   @Test
   void shouldCreateMultipleProductOrders(RequestSpecification spec) {
-    Product product1 =
-        new Product(null, "test-product-order-4", ProductType.PIZZA, new ProductStatus(3));
-    Product product2 =
-        new Product(null, "test-product-order-5", ProductType.PIZZA, new ProductStatus(3));
+    Product product1 = new Product("test-product-order-4", ProductType.PIZZA, new ProductStatus(3));
+    Product product2 = new Product("test-product-order-5", ProductType.PIZZA, new ProductStatus(3));
     Product createdProduct1 = createProduct(spec, product1);
     Product createdProduct2 = createProduct(spec, product2);
     List<ProductOrder> productOrders =
@@ -152,8 +147,7 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
   @Test
   void shouldNotCreateMultipleProductOrdersIfProductOrdersContainDuplicates(
       RequestSpecification spec) {
-    Product product =
-        new Product(null, "test-product-order-6", ProductType.PIZZA, new ProductStatus(3));
+    Product product = new Product("test-product-order-6", ProductType.PIZZA, new ProductStatus(3));
     Product createdProduct = createProduct(spec, product);
     List<ProductOrder> productOrders =
         List.of(
@@ -172,10 +166,8 @@ class ProductOrderControllerTestIT extends AbstractContainersTest {
   @Test
   void shouldNotCreateMultipleProductOrdersIfOneOfProductHasNotEnoughQuantity(
       RequestSpecification spec) {
-    Product product1 =
-        new Product(null, "test-product-order-7", ProductType.PIZZA, new ProductStatus(3));
-    Product product2 =
-        new Product(null, "test-product-order-8", ProductType.PIZZA, new ProductStatus(3));
+    Product product1 = new Product("test-product-order-7", ProductType.PIZZA, new ProductStatus(3));
+    Product product2 = new Product("test-product-order-8", ProductType.PIZZA, new ProductStatus(3));
     Product createdProduct1 = createProduct(spec, product1);
     Product createdProduct2 = createProduct(spec, product2);
     List<ProductOrder> productOrders =
